@@ -270,5 +270,6 @@ See [`examples/`](examples/) and [`docs/`](docs/) for real fusion deliberation o
 **Bottom line:** For $0.02 and ~2 minutes (down from ~3), fusion surfaces 2-3× more issues, identifies what no single model thought of, and reveals where experts disagree. The new panel (DeepSeek + MiniMax + **Gemini Flash**) achieves **100% 3/3 response rate** in testing — dramatically better than the original panel (44%). Still 39× cheaper than OpenRouter Fusion (~$0.70/query).
 
 **Documentation:**
-- [Rate Limiting & Reliability](docs/RATE-LIMITING.md) — root cause analysis, reasoning model support, per-tool timeouts
+- [Fusion vs Single Model](docs/FUSION-VS-SINGLE.md) — flagship comparison: what you get for $0.02 and 2 minutes
 - [Cost Analysis](docs/COST-ANALYSIS.md) — per-test cost breakdown across all 9 tests (~$0.16 total)
+- [Rate Limiting & Reliability](docs/RATE-LIMITING.md) — root cause analysis, reasoning model support, per-tool timeouts
