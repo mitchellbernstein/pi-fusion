@@ -107,6 +107,14 @@ async function chatCompletionOnce(
     // if all tokens went to reasoning_content. Use reasoning_content as fallback.
     const content = msg?.content || msg?.reasoning_content || null;
 
+    // Defensive: some providers return HTTP 200 with an error body
+    // (e.g., "Cannot continue from message role: assistant")
+    if (json && typeof json === "object" && "error" in json) {
+      const apiErr = (json as Record<string, unknown>).error as Record<string, unknown> | undefined;
+      const msg2 = (apiErr?.message ?? apiErr?.code ?? JSON.stringify(apiErr)) as string;
+      throw new FusionApiError("api_error", model, msg2, res.status);
+    }
+
     return {
       content,
       tool_calls: msg?.tool_calls as ChatCompletion["tool_calls"],

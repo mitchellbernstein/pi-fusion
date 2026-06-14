@@ -87,12 +87,16 @@ export async function runWithTools(
       }
 
       let result: string;
-      if (tc.function.name === "web_search") {
-        result = await webSearch(args.query ?? "", searchApiKey);
-      } else if (tc.function.name === "web_fetch") {
-        result = await webFetch(args.url ?? "", searchApiKey);
-      } else {
-        result = `Error: unknown tool "${tc.function.name}"`;
+      try {
+        if (tc.function.name === "web_search") {
+          result = await webSearch(args.query ?? "", searchApiKey);
+        } else if (tc.function.name === "web_fetch") {
+          result = await webFetch(args.url ?? "", searchApiKey);
+        } else {
+          result = `Error: unknown tool "${tc.function.name}"`;
+        }
+      } catch (err) {
+        result = `Tool execution error: ${(err as Error).message}`;
       }
 
       messages.push({
