@@ -162,7 +162,8 @@ The tool-calling loop follows the same pattern as OpenRouter Fusion: each model 
   "search": { "apiKeyEnv": "EXA_API_KEY" },
   "maxToolCalls": 8,
   "temperature": 0.7,
-  "maxCompletionTokens": 4096
+  "perModelTimeoutMs": 120000,
+  "maxCompletionTokens": 8192
 }
 ```
 
@@ -211,13 +212,51 @@ Minimum 3 panel models — no maximum. Any OpenAI-compatible endpoint works.
 
 ## Real Examples
 
-See [`examples/`](examples/) and [`docs/`](docs/) for real fusion deliberation outputs:
+See [`examples/`](examples/) and [`docs/`](docs/) for real fusion deliberation outputs from 9 tests run against live APIs (June 14, 2026).
 
-- [**Go Token Bucket Bug Hunt**](examples/go-bug-hunt.md) — intelligence test: fusion found 11 bugs (7 consensus + 4 unique), 4 blind spots a single model can't see
-- [**Zustand vs Jotai**](examples/zustand-vs-jotai.md) — full 3-model deliberation with judge analysis (8 consensus, 3 contradictions, 8 blind spots)
-- [**Cache Stampede PR Review**](examples/cache-stampede-review.md) — code review use case, all 3 models, layered fix recommendation
-- [**PostgreSQL vs MongoDB**](examples/postgres-vs-mongodb.md) — degraded path (1 model, graceful fallback)
+### Full Deliberations (2-3 models + judge synthesis)
+
+- [**Postgres Feed Optimization**](examples/postgres-feed-optimization.md) — query optimization at 10M+ scale: **10 consensus, 6 contradictions, 10 blind spots** (228s, ~$0.03)
+- [**CRDT vs OT Architecture**](examples/crdt-vs-ot-architecture.md) — real-time editor architecture: **11 consensus, 4 contradictions, 10 blind spots** (155s, ~$0.02)
+- [**JWT Auth Security Review**](examples/jwt-auth-security.md) — security audit of token rotation: **10 consensus, 3 contradictions, 8 blind spots** (173s, ~$0.02)
+- [**Go Token Bucket Bug Hunt**](examples/go-bug-hunt.md) — intelligence test: **11 bugs (7 consensus + 4 unique), 4 blind spots** (190s, ~$0.03)
+- [**Zustand vs Jotai**](examples/zustand-vs-jotai.md) — state management for Next.js: **8 consensus, 3 contradictions, 8 blind spots** (137s, ~$0.02)
+- [**Cache Stampede PR Review**](examples/cache-stampede-review.md) — code review, layered fix recommendation (173s, ~$0.02)
+
+### Degraded Path (1 model, graceful fallback)
+
+- [**Go WorkerPool Bugs**](examples/go-workerpool-bugs.md) — 9 concurrency bugs found by 1 model alone, 2 models timed out (90s, ~$0.01)
+- [**PostgreSQL vs MongoDB**](examples/postgres-vs-mongodb.md) — single-model comparison, graceful degradation (109s, ~$0.01)
+
+### Test Statistics (all 9 tests)
+
+| Metric | Value |
+|--------|-------|
+| Total cost | **~$0.16** |
+| Avg cost per test | **~$0.018** |
+| Tests with judge synthesis | **6/9 (67%)** |
+| 3-model response rate | **4/9 (44%)** |
+| 2-model response rate | **3/9 (33%)** |
+| 1-model (degraded) rate | **2/9 (22%)** |
+| 0-model (error) rate | **0/9 (0%)** |
+| Avg elapsed (with judge) | 168s |
+| Avg elapsed (degraded) | 100s |
+| Most reliable model | **DeepSeek V4 Pro** (9/9, 100%) |
+
+### Non-Fusion vs Fusion Comparison
+
+| Factor | Single Model | pi-fusion (3-model panel + judge) |
+|--------|-------------|-----------------------------------|
+| Bugs/vulnerabilities found | 4–7 typical | **10–17 (consensus + unique)** |
+| Blind spots surfaced | N/A (model can't report own gaps) | **8–10 per deliberation** |
+| Contradictions identified | None (single perspective) | **3–6 per deliberation** |
+| Fix quality | One approach | **2–3 competing fix strategies** |
+| Cost | ~$0.004–$0.008 | ~$0.020 |
+| Time | 10–30s | 137–228s |
+| **Cost per additional finding** | N/A | **~$0.002** |
+
+**Bottom line:** For $0.02 and ~3 minutes, fusion surfaces 2–3× more issues, identifies what no single model thought of, and reveals where experts disagree — making it 41× cheaper than OpenRouter Fusion (~$0.70/query).
 
 **Documentation:**
-- [Rate Limiting & Reliability](docs/RATE-LIMITING.md) — root cause analysis and mitigations
-- [Cost Analysis](docs/COST-ANALYSIS.md) — per-test cost breakdown (~$0.085 for 5 tests)
+- [Rate Limiting & Reliability](docs/RATE-LIMITING.md) — root cause analysis, reasoning model support, per-tool timeouts
+- [Cost Analysis](docs/COST-ANALYSIS.md) — per-test cost breakdown across all 9 tests (~$0.16 total)

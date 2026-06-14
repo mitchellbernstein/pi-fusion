@@ -49,7 +49,7 @@ export async function fusionCall(
     };
   }
 
-  const perModelTimeoutMs = config.perModelTimeoutMs ?? 40_000;
+  const perModelTimeoutMs = config.perModelTimeoutMs ?? 90_000;
 
   const panelResults = await Promise.allSettled(
     panelMembers.map((m) =>

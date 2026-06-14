@@ -1,6 +1,8 @@
 import type { ToolDefinition } from "./types.js";
 
 export async function webSearch(query: string, apiKey: string): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15_000);
   try {
     const res = await fetch("https://api.exa.ai/search", {
       method: "POST",
@@ -9,6 +11,7 @@ export async function webSearch(query: string, apiKey: string): Promise<string> 
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ query, numResults: 5, useAutoprompt: true, type: "auto" }),
+      signal: controller.signal,
     });
     if (!res.ok) {
       return `Search error: HTTP ${res.status}`;
@@ -20,12 +23,17 @@ export async function webSearch(query: string, apiKey: string): Promise<string> 
       .map((r, i) => `${i + 1}. **${r.title ?? "Untitled"}**\n   URL: ${r.url ?? "N/A"}\n   ${(r.text ?? "").slice(0, 500)}`)
       .join("\n\n")
       .slice(0, 4000);
-  } catch {
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") return "Search timed out (15s).";
     return "Search failed: network error";
+  } finally {
+    clearTimeout(timer);
   }
 }
 
 export async function webFetch(url: string, apiKey: string): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15_000);
   try {
     const res = await fetch("https://api.exa.ai/contents", {
       method: "POST",
@@ -34,6 +42,7 @@ export async function webFetch(url: string, apiKey: string): Promise<string> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ urls: [url], text: true }),
+      signal: controller.signal,
     });
     if (!res.ok) {
       return `Fetch error: HTTP ${res.status}`;
@@ -42,8 +51,11 @@ export async function webFetch(url: string, apiKey: string): Promise<string> {
     const text = json.results?.[0]?.text;
     if (!text) return "No text content found at URL.";
     return text.slice(0, 8000);
-  } catch {
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") return "Fetch timed out (15s).";
     return "Fetch failed: network error";
+  } finally {
+    clearTimeout(timer);
   }
 }
 

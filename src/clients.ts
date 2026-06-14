@@ -96,16 +96,29 @@ async function chatCompletionOnce(
     }
 
     const json = await res.json() as {
-      choices?: { message?: { content?: string | null; reasoning_content?: string | null; tool_calls?: ToolDefinition["function"] extends never ? never : { id: string; type: "function"; function: { name: string; arguments: string } }[] } }[];
+      choices?: { message?: { content?: string | null; reasoning_content?: string | null; reasoning?: string | null; reasoning_details?: { text: string }[]; tool_calls?: ToolDefinition["function"] extends never ? never : { id: string; type: "function"; function: { name: string; arguments: string } }[] } }[];
       usage?: { prompt_tokens: number; completion_tokens: number; completion_tokens_details?: { reasoning_tokens?: number } };
     };
 
     const choice = json.choices?.[0];
     const msg = choice?.message;
 
-    // DeepSeek V4 Pro is a reasoning model — content may be null/empty
-    // if all tokens went to reasoning_content. Use reasoning_content as fallback.
-    const content = msg?.content || msg?.reasoning_content || null;
+    // Reasoning model fallbacks: some models put all tokens in reasoning fields
+    // leaving content null/empty. We collect from multiple possible locations:
+    //  - DeepSeek V4: reasoning_content field
+    //  - OpenRouter Kimi K2.7: reasoning field or reasoning_details[].text
+    //  - MiniMax M3: content may have <think>...</think> wrapping (strip if only think)
+    let content = msg?.content || null;
+    if (!content || content.trim().length === 0) {
+      content = msg?.reasoning_content || msg?.reasoning || null;
+      if (!content && msg?.reasoning_details?.length) {
+        content = msg.reasoning_details.map((d) => d.text).join("\n");
+      }
+    }
+    // Strip <think>...</think> wrapper if it's the only content
+    if (content && /^<think>[\s\S]*<\/think>\s*$/i.test(content.trim())) {
+      content = content.replace(/<\/?think>/gi, "").trim();
+    }
 
     // Defensive: some providers return HTTP 200 with an error body
     // (e.g., "Cannot continue from message role: assistant")

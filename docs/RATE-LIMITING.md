@@ -12,6 +12,7 @@ Fusion fires 3+ API calls in parallel via `Promise.allSettled`. When any provide
 | PostgreSQL vs MongoDB | 10s | TIMEOUT (60s) | TIMEOUT (60s) | **60s** ⚠️ |
 | Cache Stampede | 15s | 50s | 40s | ~50s |
 | Cloudflare vs Fly vs Lambda | 10s | TIMEOUT (60s) | TIMEOUT (60s) | **60s** ⚠️ |
+| Go Bug Hunt | 20s | 35s | 30s | ~35s |
 
 The timeout was the old 60s hard limit in `chatCompletion`. Two causes:
 1. **Rate limiting**: MiniMax and OpenRouter throttle after rapid-fire calls (4 fusion tests in 5 minutes = 12+ API calls)
@@ -21,11 +22,11 @@ The timeout was the old 60s hard limit in `chatCompletion`. Two causes:
 
 ### 1. Per-model timeout (`perModelTimeoutMs`)
 
-Each model gets an independent deadline via `Promise.race`. Default: 40s. After a model is cut off, other models continue and results are collected.
+Each model gets an independent deadline via `Promise.race`. Default: 90s. After a model is cut off, other models continue and results are collected.
 
 ```typescript
 // engine.ts
-const perModelTimeoutMs = config.perModelTimeoutMs ?? 40_000;
+const perModelTimeoutMs = config.perModelTimeoutMs ?? 90_000;
 Promise.race([
   runWithTools(...),
   timeout(perModelTimeoutMs),
@@ -53,7 +54,13 @@ When a provider returns HTTP 429, the `retry-after` header is read and included 
 
 ### 4. Reasoning model support
 
-DeepSeek V4 Pro is a reasoning model — it spends tokens on internal `reasoning_content`. If `content` is null/empty, the engine falls back to `reasoning_content`. Combined with increased `maxCompletionTokens` (default 4096 → recommended 8192 for reasoning models).
+DeepSeek V4 Pro, MiniMax M3, and Kimi K2.7 Code are all reasoning models — they spend tokens on internal reasoning before producing visible content. The engine handles three different reasoning formats:
+
+- **DeepSeek**: `reasoning_content` field in response
+- **MiniMax M3**: `<think>...</think>` tags inside the `content` text
+- **OpenRouter/Kimi**: `reasoning` field or `reasoning_details[].text`
+
+If `content` is null/empty, the engine falls back through these in order. Combined with increased `maxCompletionTokens` (default 4096 → recommended 8192 for reasoning models).
 
 ## Degradation Paths
 
@@ -65,7 +72,9 @@ DeepSeek V4 Pro is a reasoning model — it spends tokens on internal `reasoning
 | 0/3 respond | Typed error with `failure_reason` |
 | Rate-limited mid-session | Retry × 2 with backoff, then report to user |
 
-## Recommendations for Users
+### 5. Per-tool timeout
+
+Individual `web_search` and `web_fetch` calls have a 15s timeout via `AbortController`. This prevents a single hung search from blocking a model's entire time budget.
 
 1. **Space out fusion calls** — rapid consecutive calls hit provider rate limits
 2. **Set `perModelTimeoutMs`** in `~/.pi/fusion-panel.json`:
