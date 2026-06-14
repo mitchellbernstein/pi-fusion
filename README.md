@@ -230,6 +230,10 @@ Each test was run twice — once with a single model (DeepSeek V4 Pro) and once 
 
 ### Full Deliberations (2-3 models + judge synthesis)
 
+- [**SQL Injection Audit**](examples/sql-injection-audit.md) ✨ — Express.js endpoint: **6 consensus, 2 contradictions, 6 blind spots** (222s, ~$0.02)
+- [**Rust Async Deadlock**](examples/rust-async-deadlock.md) ✨ — connection pool: **4 consensus, 2 contradictions, 5 blind spots** — judge caught a bug in the PROMPT (150s, ~$0.02)
+- [**React Memo Bug**](examples/react-memo-bug.md) ✨ — 10K item render: **3 consensus, 3 contradictions, 5 blind spots** (138s, ~$0.02)
+- [**Distributed Consensus**](examples/distributed-consensus.md) ✨ — PG locks vs etcd: **7 consensus, 4 contradictions, 6 blind spots** (115s, ~$0.02)
 - [**Postgres Feed Optimization**](examples/postgres-feed-optimization.md) — query optimization at 10M+ scale: **10 consensus, 6 contradictions, 10 blind spots** (228s, ~$0.03)
 - [**CRDT vs OT Architecture**](examples/crdt-vs-ot-architecture.md) — real-time editor architecture: **11 consensus, 4 contradictions, 10 blind spots** (155s, ~$0.02)
 - [**JWT Auth Security Review**](examples/jwt-auth-security.md) — security audit of token rotation: **10 consensus, 3 contradictions, 8 blind spots** (173s, ~$0.02)
@@ -246,37 +250,39 @@ Each test was run twice — once with a single model (DeepSeek V4 Pro) and once 
 
 | Metric | Value |
 |--------|-------|
-| Total cost | **~$0.16** |
-| Avg cost per test | **~$0.018** |
-| Tests with judge synthesis | **6/9 (67%)** |
-| 3-model response rate (old panel) | 4/9 (44%) → **3/3 (100%) with new panel** ✨ |
-| 2-model response rate | 3/9 (33%) |
-| 1-model (degraded) rate | 2/9 (22%) → **0% with new panel** ✨ |
-| 0-model (error) rate | **0/9 (0%)** |
-| Avg elapsed (with judge) | 168s → **~115s with Gemini Flash** |
-| Most reliable model | **DeepSeek V4 Pro** (11/11, 100%) |
-| Fastest model | **Gemini 2.5 Flash** (2-7s, 100% so far) |
+| Total cost | **~$0.24** |
+| Avg cost per test | **~$0.019** |
+| Tests with judge synthesis | **10/13 (77%)** |
+| 3-model response rate (new panel) | **75% (3/4)** |
+| 2-model response rate | 1/4 (25%) |
+| 1-model (degraded) rate | 2/13 (15%) |
+| 0-model (error) rate | **0/13 (0%)** |
+| Avg elapsed (with judge) | ~140s |
+| Most reliable model | **DeepSeek V4 Pro** (13/13, 100%) |
+| Fastest model | **Gemini 2.5 Flash** (2-7s, 6/6 so far, 100%) |
 
-### Panel Model Reliability (11 tests)
+### Panel Model Reliability (13 tests)
 
 | Model | Response Rate | Avg Time | Cost per Query | Notes |
 |-------|-------------|----------|----------------|-------|
-| **DeepSeek V4 Pro** | 100% (11/11) | 10-30s | ~$0.008 | Anchor model — rock solid |
-| **Gemini 2.5 Flash** ⭐ | **100% (2/2)**, targeting 95%+ | 2-7s | ~$0.0003 | Replaced Kimi — 30× faster |
-| **MiniMax M3** | 73% (8/11) | 15-50s | ~$0.011 | Independent perspective, needs 16384 token budget |
+| **DeepSeek V4 Pro** | 100% (13/13) | 10-30s | ~$0.008 | Anchor model — rock solid |
+| **Gemini 2.5 Flash** ⭐ | **100% (6/6)** | 2-7s | ~$0.0003 | Replaced Kimi — 30× faster |
+| **MiniMax M3** | 77% (10/13) | 15-50s | ~$0.011 | Independent perspective, needs 16384 token budget |
 | ~~Kimi K2.7~~ (removed) | 11% (1/9) | 120s timeout | ~$0.002 | Replaced — too slow |
 
 ### Non-Fusion vs Fusion Comparison
 
+📄 **[Full comparison doc →](docs/FUSION-VS-SINGLE.md)** — 4 head-to-head coding tests with per-test breakdowns
+
 | Factor | Single Model | pi-fusion (3-model panel + judge) |
 |--------|-------------|-----------------------------------|
 | Bugs/vulnerabilities found | 4–7 typical | **10–17 (consensus + unique)** |
-| Blind spots surfaced | N/A (model can't report own gaps) | **8–10 per deliberation** |
-| Contradictions identified | None (single perspective) | **3–6 per deliberation** |
+| Blind spots surfaced | 0 (model can't report own gaps) | **5–6 per deliberation** |
+| Contradictions identified | None (single perspective) | **2–4 per deliberation** |
 | Fix quality | One approach | **2–3 competing fix strategies** |
-| Cost | ~$0.004–$0.008 | ~$0.020 |
-| Time | 10–30s | 137–228s |
-| **Cost per additional finding** | N/A | **~$0.002** |
+| Cost | ~$0.0055 | ~$0.021 |
+| Time | 33s | 156s |
+| **Cost per additional finding** | N/A | **~$0.001** |
 
 **Bottom line:** For $0.02 and ~2 minutes (down from ~3), fusion surfaces 2-3× more issues, identifies what no single model thought of, and reveals where experts disagree. The new panel (DeepSeek + MiniMax + **Gemini Flash**) achieves **100% 3/3 response rate** in testing — dramatically better than the original panel (44%). Still 39× cheaper than OpenRouter Fusion (~$0.70/query).
 
