@@ -6,8 +6,8 @@ import { fileURLToPath } from "node:url";
 
 const extensionDir = dirname(fileURLToPath(import.meta.url));
 const packageRoot = join(extensionDir, "..", "..");
-const tsxBin = join(packageRoot, "node_modules", ".bin", "tsx");
 const cliPath = join(packageRoot, "src", "cli.ts");
+const nodeModulesPath = join(packageRoot, "node_modules");
 
 export default function (pi: ExtensionAPI) {
   pi.registerTool({
@@ -29,9 +29,9 @@ export default function (pi: ExtensionAPI) {
     }),
     async execute(_id, params) {
       try {
-        const stdout = execFileSync(tsxBin, [cliPath, params.prompt], {
+        const stdout = execFileSync("node", ["--import", nodeModulesPath + "/tsx/dist/cli.mjs", cliPath, params.prompt], {
           encoding: "utf-8",
-          timeout: 120_000,
+          timeout: 180_000,
           env: { ...process.env },
           maxBuffer: 2 * 1024 * 1024,
           cwd: packageRoot,
