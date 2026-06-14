@@ -29,7 +29,7 @@ export default function (pi: ExtensionAPI) {
     }),
     async execute(_id, params) {
       try {
-        const stdout = execFileSync("node", ["--import", "tsx", cliPath, params.prompt], {
+        const stdout = execFileSync(tsxBin, [cliPath, params.prompt], {
           encoding: "utf-8",
           timeout: 120_000,
           env: { ...process.env },
