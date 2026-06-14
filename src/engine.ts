@@ -4,7 +4,7 @@ import { runWithTools } from "./tool-loop.js";
 import { buildJudgePrompt } from "./judge-prompt.js";
 import { PANEL_TOOLS } from "./tools.js";
 
-const PANEL_SYSTEM_PROMPT = `You are a knowledgeable AI assistant. You have access to web_search and web_fetch tools to find current information. Use them when the prompt requires up-to-date knowledge or specific facts. Provide a thorough, well-reasoned response.`;
+const PANEL_SYSTEM_PROMPT = `You are a knowledgeable AI assistant contributing to a multi-model deliberation panel. You have access to web_search and web_fetch tools to find current information — use them when needed. Provide a thorough but concise response. Avoid excessive meta-commentary or internal reasoning visible to the user.`;
 
 export async function fusionCall(
   prompt: string,

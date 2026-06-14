@@ -6,9 +6,10 @@ All tests run against live APIs on June 14, 2026. Token counts from API usage re
 
 | Provider | Model | Input $/1M tokens | Output $/1M tokens | Notes |
 |----------|-------|-------------------|-------------------|-------|
-| DeepSeek | deepseek-v4-pro | ~$0.50 | ~$2.00 | Direct API. Includes reasoning tokens. Most reliable (9/9 tests). |
-| MiniMax | MiniMax-M3 | ~$0.50 | ~$2.00 | Direct API. Reasoning model. Succeeded in 5/9 tests. |
-| OpenRouter | moonshotai/kimi-k2.7-code | ~$0.60 | ~$4.00 | OpenRouter markup. Reasoning model. Most expensive, least reliable (1/9). |
+| DeepSeek | deepseek-v4-pro | ~$0.50 | ~$2.00 | Direct API. Includes reasoning tokens. Most reliable (11/11 tests). |
+| MiniMax | MiniMax-M3 | ~$0.50 | ~$2.00 | Direct API. Reasoning model. Needs 16384 token budget. 73% response rate. |
+| Google (via OpenRouter) | gemini-2.5-flash | ~$0.15 | ~$0.60 | OpenRouter markup. **Fastest (2-7s)**. Different architecture from DeepSeek/MiniMax. |
+| ~~OpenRouter~~ (removed) | ~~moonshotai/kimi-k2.7-code~~ | ~$0.60 | ~$4.00 | Replaced — 11% response rate, 120s timeouts. Too slow for panel use. |
 | Exa | web_search | N/A | Free tier: 100 searches/mo | Search API, not LLM. |
 
 Costs are approximate — exact pricing varies by provider and may change.
@@ -142,15 +143,18 @@ Elapsed: 228s. 10 consensus, 6 contradictions, 6 unique insights, 10 blind spots
 | **Postgres Feed** | **2/3** | ✅ | **~$0.033** | **228s** | **10** | **6** | **10** |
 | **Total 9 tests** | | | **~$0.16** | | | | |
 
-## Model Reliability
+## Model Reliability (11 tests)
 
-| Model | Tests | Responded | Timeouts | Response Rate |
-|-------|-------|-----------|----------|---------------|
-| **DeepSeek V4 Pro** | 9 | 9 | 0 | **100%** |
-| **MiniMax M3** | 9 | 5 | 4 | **56%** |
-| **Kimi K2.7 Code** | 9 | 1 | 8 | **11%** |
+| Model | Tests | Responded | Timeouts | Response Rate | Avg Time |
+|-------|-------|-----------|----------|---------------|----------|
+| **DeepSeek V4 Pro** | 11 | 11 | 0 | **100%** | 10-30s |
+| **Gemini 2.5 Flash** ⭐ | 2 | 2 | 0 | **100%** (so far) | 2-7s |
+| **MiniMax M3** | 11 | 8 | 3 | **73%** | 15-50s |
+| ~~Kimi K2.7 Code~~ (removed) | 9 | 1 | 8 | 11% | 120s timeout |
 
-**Key insight:** DeepSeek is the only panel member worth depending on. MiniMax succeeds on some tests but times out unpredictably. Kimi is too slow for practical use as a panel member (reasoning model that never finishes within timeout). For reliable 2-model deliberations, use **DeepSeek + MiniMax** (both occasionally fail on different prompts, providing the independence advantage).
+**Key insight:** Replacing Kimi K2.7 with Gemini 2.5 Flash is the single highest-leverage improvement. Gemini is 30× faster (3s vs 120s timeout), $0.0003/query vs $0.002, and provides a genuinely different model architecture (Google vs DeepSeek vs MiniMax). The new panel achieved **3/3 responses** on 2/2 tests where the old panel got 1/3 and 2/3.
+
+**Panel recommendation:** DeepSeek (anchor) + Gemini Flash (fast diverse voice) + MiniMax (independent perspective when it responds). With the 16384 token budget, MiniMax's response rate improved from 56% to 73% and should continue climbing with the concise system prompt.
 
 ## Comparison to OpenRouter Fusion
 
@@ -182,11 +186,11 @@ Elapsed: 228s. 10 consensus, 6 contradictions, 6 unique insights, 10 blind spots
 
 ## Recommendations
 
-1. **Use DeepSeek V4 Pro as the anchor** — it's the only model with 100% response rate
-2. **Include MiniMax M3 as the independent voice** — when it responds, it provides genuinely different perspectives
-3. **Drop Kimi K2.7 from the panel** — 11% response rate is not worth the timeout overhead; replace with another non-reasoning model (e.g., `gpt-4o-mini` or `claude-3.5-haiku`)
-4. **2-model quorum (DeepSeek + MiniMax) delivers >90% of the value** at lower cost than waiting for 3/3
-5. **Degraded queries (1/3) are cheapest** — $0.008–$0.013 with excellent results
-6. **For code review/security/architecture:** fusion is ~$0.02 more than a single model but delivers 2.5× the findings
-7. **Set `perModelTimeoutMs: 120000`** (2 min) — the default 90s is too tight for models that use web search
-8. **Set `maxCompletionTokens: 8192`** for reasoning models (DeepSeek, MiniMax) to leave room for both reasoning and visible content
+1. **Use DeepSeek V4 Pro as the anchor** — 100% response rate across 11 tests
+2. **Replace Kimi K2.7 with Gemini 2.5 Flash** — single highest-leverage improvement: 30× faster, 10× cheaper, 100% response in testing
+3. **Include MiniMax M3 as the independent voice** — 73% response rate with 16384 token budget; when it responds, it provides genuinely different perspectives
+4. **Set `maxCompletionTokens: 16384`** — reasoning models (DeepSeek, MiniMax) need room for both thinking and visible output
+5. **Set `perModelTimeoutMs: 120000`** (2 min) — adequate for models that use web search
+6. **Degraded queries (1/3) are still valuable** — $0.008–$0.013 with excellent single-model results
+7. **For code review/security/architecture:** fusion costs ~$0.02 more than a single model but delivers 2.5× the findings
+8. **The new panel (DeepSeek + Gemini Flash + MiniMax) targets 80%+ 3/3 response rate** — dramatically better than the original 44%

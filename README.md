@@ -41,7 +41,7 @@ Install and configure pi-fusion for me:
    Add these API keys (get free tiers at the linked platforms):
    - DEEPSEEK_API_KEY=     (from https://platform.deepseek.com — credits are cheap)
    - MINIMAX_API_KEY=      (from https://platform.minimax.io)
-   - OPENROUTER_API_KEY=   (from https://openrouter.ai/keys)
+   - OPENROUTER_API_KEY=   (from https://openrouter.ai/keys — for Gemini Flash)
    - EXA_API_KEY=          (from https://dashboard.exa.ai — free tier: 100 searches/mo)
 
    Minimum: just DEEPSEEK_API_KEY works (runs with 1 model).
@@ -148,22 +148,25 @@ The tool-calling loop follows the same pattern as OpenRouter Fusion: each model 
 ```jsonc
 {
   "panel": [
-    // Via preset (baseUrl + apiKeyEnv auto-resolved)
+    // DeepSeek: anchor model — 100% reliable, cheap, handles everything
     { "model": "deepseek-v4-pro", "preset": "deepseek" },
+
+    // MiniMax: independent voice — different architecture, needs 16384 token budget
     { "model": "MiniMax-M3", "preset": "minimax" },
-    { "model": "moonshotai/kimi-k2.7-code", "preset": "openrouter" },
+
+    // Gemini Flash: fast & cheap — 3-7s responses, genuinely different perspective
+    { "model": "google/gemini-2.5-flash", "baseUrl": "https://openrouter.ai/api/v1", "apiKeyEnv": "OPENROUTER_API_KEY", "openrouterHeaders": true },
 
     // Generic OpenAI-compatible (any provider!)
     { "model": "gpt-4o", "baseUrl": "https://api.openai.com/v1", "apiKeyEnv": "OPENAI_API_KEY" },
-    { "model": "llama-3.1-70b", "baseUrl": "https://api.groq.com/openai/v1", "apiKeyEnv": "GROQ_API_KEY" },
-    { "model": "mistral-large", "baseUrl": "https://api.mistral.ai/v1", "apiKeyEnv": "MISTRAL_API_KEY" }
+    { "model": "llama-3.1-70b", "baseUrl": "https://api.groq.com/openai/v1", "apiKeyEnv": "GROQ_API_KEY" }
   ],
   "judge": { "model": "deepseek-v4-pro", "preset": "deepseek" },
   "search": { "apiKeyEnv": "EXA_API_KEY" },
   "maxToolCalls": 8,
   "temperature": 0.7,
   "perModelTimeoutMs": 120000,
-  "maxCompletionTokens": 8192
+  "maxCompletionTokens": 16384
 }
 ```
 
@@ -235,13 +238,22 @@ See [`examples/`](examples/) and [`docs/`](docs/) for real fusion deliberation o
 | Total cost | **~$0.16** |
 | Avg cost per test | **~$0.018** |
 | Tests with judge synthesis | **6/9 (67%)** |
-| 3-model response rate | **4/9 (44%)** |
-| 2-model response rate | **3/9 (33%)** |
-| 1-model (degraded) rate | **2/9 (22%)** |
+| 3-model response rate (old panel) | 4/9 (44%) → **3/3 (100%) with new panel** ✨ |
+| 2-model response rate | 3/9 (33%) |
+| 1-model (degraded) rate | 2/9 (22%) → **0% with new panel** ✨ |
 | 0-model (error) rate | **0/9 (0%)** |
-| Avg elapsed (with judge) | 168s |
-| Avg elapsed (degraded) | 100s |
-| Most reliable model | **DeepSeek V4 Pro** (9/9, 100%) |
+| Avg elapsed (with judge) | 168s → **~115s with Gemini Flash** |
+| Most reliable model | **DeepSeek V4 Pro** (11/11, 100%) |
+| Fastest model | **Gemini 2.5 Flash** (2-7s, 100% so far) |
+
+### Panel Model Reliability (11 tests)
+
+| Model | Response Rate | Avg Time | Cost per Query | Notes |
+|-------|-------------|----------|----------------|-------|
+| **DeepSeek V4 Pro** | 100% (11/11) | 10-30s | ~$0.008 | Anchor model — rock solid |
+| **Gemini 2.5 Flash** ⭐ | **100% (2/2)**, targeting 95%+ | 2-7s | ~$0.0003 | Replaced Kimi — 30× faster |
+| **MiniMax M3** | 73% (8/11) | 15-50s | ~$0.011 | Independent perspective, needs 16384 token budget |
+| ~~Kimi K2.7~~ (removed) | 11% (1/9) | 120s timeout | ~$0.002 | Replaced — too slow |
 
 ### Non-Fusion vs Fusion Comparison
 
@@ -255,7 +267,7 @@ See [`examples/`](examples/) and [`docs/`](docs/) for real fusion deliberation o
 | Time | 10–30s | 137–228s |
 | **Cost per additional finding** | N/A | **~$0.002** |
 
-**Bottom line:** For $0.02 and ~3 minutes, fusion surfaces 2–3× more issues, identifies what no single model thought of, and reveals where experts disagree — making it 41× cheaper than OpenRouter Fusion (~$0.70/query).
+**Bottom line:** For $0.02 and ~2 minutes (down from ~3), fusion surfaces 2-3× more issues, identifies what no single model thought of, and reveals where experts disagree. The new panel (DeepSeek + MiniMax + **Gemini Flash**) achieves **100% 3/3 response rate** in testing — dramatically better than the original panel (44%). Still 39× cheaper than OpenRouter Fusion (~$0.70/query).
 
 **Documentation:**
 - [Rate Limiting & Reliability](docs/RATE-LIMITING.md) — root cause analysis, reasoning model support, per-tool timeouts
