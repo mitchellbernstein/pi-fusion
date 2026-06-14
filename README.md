@@ -215,7 +215,18 @@ Minimum 3 panel models — no maximum. Any OpenAI-compatible endpoint works.
 
 ## Real Examples
 
-See [`examples/`](examples/) and [`docs/`](docs/) for real fusion deliberation outputs from 9 tests run against live APIs (June 14, 2026).
+See [`examples/`](examples/) and [`docs/`](docs/) for real fusion deliberation outputs from 13 tests run against live APIs (June 14, 2026).
+
+### Fusion vs Single Model Comparison (4 new battery tests)
+
+Each test was run twice — once with a single model (DeepSeek V4 Pro) and once with fusion (3-model panel + judge). Full side-by-side results with actual findings:
+
+| Test | Single Model | Fusion | Extra Value |
+|------|-------------|--------|-------------|
+| [**React Memo Bug**](examples/react-memo-bug.md) | 2 issues found, 34s, ~$0.007 | **6 issues + 5 blind spots**, 138s, ~$0.024 | 5 blind spots including useTransition and DOM bottleneck |
+| [**SQL Injection Audit**](examples/sql-injection-audit.md) | 4 vectors + 1 bypass, 23s, ~$0.004 | **7 vectors + 6 blind spots**, 221s, ~$0.027 | 6 blind spots on DB driver quirks and encoding bypasses |
+| [**Rust Async Deadlock**](examples/rust-async-deadlock.md) | 1 deadlock scenario, 29s, ~$0.005 | **2 scenarios + 5 blind spots**, 150s, ~$0.018 | Judge caught prompt's assumption was wrong (code leaks, not deadlocks) |
+| [**Distributed Consensus**](examples/distributed-consensus.md) | 2 failure scenarios, 46s, ~$0.006 | **5 scenarios + 6 blind spots**, 115s, ~$0.022 | Migration path, cross-region concerns, observability gaps |
 
 ### Full Deliberations (2-3 models + judge synthesis)
 
@@ -231,7 +242,7 @@ See [`examples/`](examples/) and [`docs/`](docs/) for real fusion deliberation o
 - [**Go WorkerPool Bugs**](examples/go-workerpool-bugs.md) — 9 concurrency bugs found by 1 model alone, 2 models timed out (90s, ~$0.01)
 - [**PostgreSQL vs MongoDB**](examples/postgres-vs-mongodb.md) — single-model comparison, graceful degradation (109s, ~$0.01)
 
-### Test Statistics (all 9 tests)
+### Test Statistics (all 13 tests)
 
 | Metric | Value |
 |--------|-------|
