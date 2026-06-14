@@ -2,7 +2,7 @@
 
 **Multi-model deliberation for pi** — fans out your query to 3+ AI models in parallel (each with web search), then a judge synthesizes structured analysis: consensus, contradictions, unique insights, and blind spots.
 
-Matches [OpenRouter Fusion](https://openrouter.ai/fusion)'s architecture exactly, at **~$0.01/query** (vs ~$0.70 — roughly **70× cheaper**).
+Follows the same deliberation pattern as [OpenRouter Fusion](https://openrouter.ai/fusion) — parallel panel → judge synthesis — at **~$0.01/query** (OpenRouter Fusion charges ~$0.70/query at time of testing).
 
 ---
 
@@ -95,11 +95,11 @@ fusionCall(prompt)
 
 Each model gets access to `web_search` and `web_fetch` tools (Exa API) and can make up to 8 tool calls per deliberation. The judge also has access to these tools.
 
-The tool-calling loop mirrors OpenRouter Fusion's behavior exactly.
+The tool-calling loop follows the same pattern as OpenRouter Fusion: each model can search the web and the judge has access to those same tools.
 
 ---
 
-## Output Schema (matches OpenRouter Fusion)
+## Output Schema
 
 ```jsonc
 {
@@ -186,9 +186,9 @@ Minimum 3 panel models — no maximum. Any OpenAI-compatible endpoint works.
 | web_search per model | ✅ | ✅ (Exa) |
 | web_fetch per model | ✅ | ✅ (Exa) |
 | Tool-calling loop | ✅ (max 8) | ✅ (max 8) |
-| Output schema | consensus, contradictions, etc. | exact match |
+| Output schema | consensus, contradictions, etc. | same structure |
 | Custom models | Paid only | Any OpenAI-compatible |
-| **Cost per query** | ~$0.70 | **~$0.01 (70× cheaper)** |
+| **Cost per query** | ~$0.70 (at time of testing) | **~$0.01** |
 
 ---
 
@@ -204,8 +204,8 @@ Minimum 3 panel models — no maximum. Any OpenAI-compatible endpoint works.
 
 - **llm-council** (Karpathy): Python, web app interface, no web tools, abandoned. Wrong language and wrong schema.
 - **consilium**: Rust, no web tools, different output schema. Great project but doesn't match OpenRouter Fusion's architecture.
-- **OpenRouter Fusion**: Identical architecture but ~$0.70/query and model-locked to OpenRouter's marketplace.
-- **pi-fusion**: Matches the architecture exactly, works with any OpenAI-compatible endpoint, and costs ~$0.01/query.
+- **OpenRouter Fusion**: Same deliberation pattern but ~$0.70/query and model-locked to OpenRouter's marketplace.
+- **pi-fusion**: Follows the same deliberation pattern, works with any OpenAI-compatible endpoint, and costs ~$0.01/query.
 
 ---
 

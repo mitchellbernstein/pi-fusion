@@ -1,6 +1,11 @@
+---
+name: pi-fusion
+description: Uses the fusion tool for multi-model deliberation — fanning queries to 3+ AI models in parallel with web search, then synthesizing structured analysis via a judge. Use for architecture decisions, code review, debugging, and tech evaluation where independent verification adds value.
+---
+
 # pi-fusion Skill
 
-You have access to the `fusion` tool — a local multi-model deliberation engine that fans out your query to 3+ independent AI models in parallel, each with web search, then has a judge synthesize structured analysis. It matches OpenRouter Fusion's architecture exactly, costs ~$0.01/query, and runs in 30-120 seconds.
+You have access to the `fusion` tool — a local multi-model deliberation engine that fans out your query to 3+ independent AI models in parallel, each with web search, then has a judge synthesize structured analysis. The architecture is inspired by OpenRouter Fusion's multi-model deliberation pattern: parallel panel → judge synthesis. Costs ~$0.01/query, runs in 30-120 seconds.
 
 This skill teaches you when to reach for fusion, how to frame prompts for maximum return, and how to act on the output — not just display it.
 
