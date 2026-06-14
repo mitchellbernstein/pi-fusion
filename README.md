@@ -211,8 +211,13 @@ Minimum 3 panel models — no maximum. Any OpenAI-compatible endpoint works.
 
 ## Real Examples
 
-See the [`examples/`](examples/) directory for real fusion deliberation outputs:
+See [`examples/`](examples/) and [`docs/`](docs/) for real fusion deliberation outputs:
 
+- [**Go Token Bucket Bug Hunt**](examples/go-bug-hunt.md) — intelligence test: fusion found 11 bugs (7 consensus + 4 unique), 4 blind spots a single model can't see
 - [**Zustand vs Jotai**](examples/zustand-vs-jotai.md) — full 3-model deliberation with judge analysis (8 consensus, 3 contradictions, 8 blind spots)
 - [**Cache Stampede PR Review**](examples/cache-stampede-review.md) — code review use case, all 3 models, layered fix recommendation
 - [**PostgreSQL vs MongoDB**](examples/postgres-vs-mongodb.md) — degraded path (1 model, graceful fallback)
+
+**Documentation:**
+- [Rate Limiting & Reliability](docs/RATE-LIMITING.md) — root cause analysis and mitigations
+- [Cost Analysis](docs/COST-ANALYSIS.md) — per-test cost breakdown (~$0.085 for 5 tests)

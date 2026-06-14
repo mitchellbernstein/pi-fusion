@@ -49,13 +49,22 @@ export async function fusionCall(
     };
   }
 
+  const perModelTimeoutMs = config.perModelTimeoutMs ?? 40_000;
+
   const panelResults = await Promise.allSettled(
     panelMembers.map((m) =>
-      runWithTools(m, PANEL_SYSTEM_PROMPT, prompt, PANEL_TOOLS, searchApiKey, {
-        maxToolCalls: config.maxToolCalls,
-        maxTokens: config.maxCompletionTokens,
-        temperature: config.temperature,
-      }),
+      Promise.race([
+        runWithTools(m, PANEL_SYSTEM_PROMPT, prompt, PANEL_TOOLS, searchApiKey, {
+          maxToolCalls: config.maxToolCalls,
+          maxTokens: config.maxCompletionTokens,
+          temperature: config.temperature,
+          timeoutMs: perModelTimeoutMs,
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new (class PerModelTimeout extends Error { type = "timeout" })())
+            , perModelTimeoutMs),
+        ),
+      ]),
     ),
   );
 
@@ -73,6 +82,7 @@ export async function fusionCall(
       if (err?.type === "auth_error") reason = "authentication_failed";
       else if (err?.type === "rate_limited") reason = "rate_limited";
       else if (err?.type === "timeout") reason = "timeout";
+      else if (err instanceof Error && err.name === "PerModelTimeout") reason = "timeout";
       else reason = err?.message ?? "unknown error";
       failedModels.push({ model, reason });
     }

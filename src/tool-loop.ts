@@ -14,6 +14,7 @@ export async function runWithTools(
     maxToolCalls?: number;
     maxTokens?: number;
     temperature?: number;
+    timeoutMs?: number;
   },
 ): Promise<{ content: string; messages: ChatMessage[] }> {
   const messages: ChatMessage[] = [
@@ -34,6 +35,7 @@ export async function runWithTools(
         maxTokens: options?.maxTokens,
         temperature: options?.temperature,
         openrouterHeaders: member.openrouterHeaders,
+        timeoutMs: options?.timeoutMs,
       },
     );
 
@@ -59,6 +61,7 @@ export async function runWithTools(
           maxTokens: options?.maxTokens,
           temperature: options?.temperature,
           openrouterHeaders: member.openrouterHeaders,
+          timeoutMs: options?.timeoutMs,
         },
       );
       return { content: final.content ?? "[Model produced no content]", messages };

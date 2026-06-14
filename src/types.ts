@@ -61,6 +61,7 @@ export interface FusionConfig {
   maxToolCalls?: number;
   temperature?: number;
   maxCompletionTokens?: number;
+  perModelTimeoutMs?: number;
   search?: { apiKeyEnv?: string };
 }
 
