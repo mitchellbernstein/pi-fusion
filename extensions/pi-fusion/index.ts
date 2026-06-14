@@ -5,7 +5,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const extensionDir = dirname(fileURLToPath(import.meta.url));
-const packageRoot = join(extensionDir, "..", "..", "..");
+const packageRoot = join(extensionDir, "..", "..");
 const tsxBin = join(packageRoot, "node_modules", ".bin", "tsx");
 const cliPath = join(packageRoot, "src", "cli.ts");
 
