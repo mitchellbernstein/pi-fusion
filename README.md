@@ -10,6 +10,9 @@ Matches [OpenRouter Fusion](https://openrouter.ai/fusion)'s architecture exactly
 
 ```bash
 pi install git:github.com/mitchellbernstein/pi-fusion
+
+# When updates are published:
+pi update   # or: pi install git:github.com/mitchellbernstein/pi-fusion@main
 ```
 
 If you don't use pi, install manually:
