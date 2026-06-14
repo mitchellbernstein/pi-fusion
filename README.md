@@ -206,3 +206,13 @@ Minimum 3 panel models — no maximum. Any OpenAI-compatible endpoint works.
 - **consilium**: Rust, no web tools, different output schema. Great project but doesn't match OpenRouter Fusion's architecture.
 - **OpenRouter Fusion**: Identical architecture but ~$0.70/query and model-locked to OpenRouter's marketplace.
 - **pi-fusion**: Matches the architecture exactly, works with any OpenAI-compatible endpoint, and costs ~$0.01/query.
+
+---
+
+## Real Examples
+
+See the [`examples/`](examples/) directory for real fusion deliberation outputs:
+
+- [**Zustand vs Jotai**](examples/zustand-vs-jotai.md) — full 3-model deliberation with judge analysis (8 consensus, 3 contradictions, 8 blind spots)
+- [**Cache Stampede PR Review**](examples/cache-stampede-review.md) — code review use case, all 3 models, layered fix recommendation
+- [**PostgreSQL vs MongoDB**](examples/postgres-vs-mongodb.md) — degraded path (1 model, graceful fallback)
