@@ -26,6 +26,8 @@ For less than the price of sending one text message, fusion adds 10–20 finding
 
 ## Test 1: React Memo Performance Bug
 
+📄 **[Full deliberation output](../examples/react-memo-bug.md)** — 3/3 models, judge synthesis, 138.4s |
+
 **Code under review:** A component rendering 10,000 items with `React.memo` that's still slow.
 
 | Dimension | Single Model | Fusion |
@@ -51,6 +53,8 @@ The `onSelect` callback is recreated every render, breaking `React.memo`'s shall
 ---
 
 ## Test 2: SQL Injection Audit
+
+📄 **[Full deliberation output](../examples/sql-injection-audit.md)** — 3/3 models, judge synthesis, 221.5s |
 
 **Code under review:** An Express.js endpoint concatenating user input into SQL, "protected" by a middleware that doubles single quotes.
 
@@ -81,6 +85,8 @@ Four injection vectors: `name` (LIKE clause), `role` (WHERE clause), `orderBy` (
 
 ## Test 3: Rust Async Deadlock
 
+📄 **[Full deliberation output](../examples/rust-async-deadlock.md)** — 2/3 models, judge synthesis, 149.9s |
+
 **Code under review:** An async connection pool where `Drop` can't call async `put()`.
 
 | Dimension | Single Model | Fusion |
@@ -110,6 +116,8 @@ This is fusion at its best: the model that corrects the human who wrote the test
 ---
 
 ## Test 4: Distributed Consensus Design
+
+_(Full deliberation output forthcoming — test completed 3/3 models, 114.7s, 7 consensus, 4 contradictions)_ |
 
 **Decision:** PostgreSQL advisory locks vs etcd Raft for leader election on a 5-node Fly.io cluster.
 
@@ -258,4 +266,4 @@ Or build a use-case directly into your prompt:
 
 ---
 
-*All tests run June 14, 2026 against live APIs. Panel: DeepSeek V4 Pro (anchor), MiniMax M3 (independent), Gemini 2.5 Flash (fast perspective). Judge: DeepSeek V4 Pro. See [Cost Analysis](COST-ANALYSIS.md) for per-test token counts and [Real Examples](../examples/) for full deliberation outputs.*
+*All tests run June 14, 2026 against live APIs. Panel: DeepSeek V4 Pro (anchor), MiniMax M3 (independent), Gemini 2.5 Flash (fast perspective). Judge: DeepSeek V4 Pro. See [Cost Analysis](COST-ANALYSIS.md) for per-test token counts and all [Real Examples](../examples/) for full deliberation outputs.*
