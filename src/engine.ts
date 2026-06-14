@@ -1,0 +1,153 @@
+import type { FusionConfig, FusionResult, FusionResponse, FusionFailure, FusionAnalysis, ResolvedPanelMember } from "./types.js";
+import { resolveMember, validateConfig } from "./config.js";
+import { runWithTools } from "./tool-loop.js";
+import { buildJudgePrompt } from "./judge-prompt.js";
+import { PANEL_TOOLS } from "./tools.js";
+
+const PANEL_SYSTEM_PROMPT = `You are a knowledgeable AI assistant. You have access to web_search and web_fetch tools to find current information. Use them when the prompt requires up-to-date knowledge or specific facts. Provide a thorough, well-reasoned response.`;
+
+export async function fusionCall(
+  prompt: string,
+  config: FusionConfig,
+  options?: { fusionDepth?: number },
+): Promise<FusionResult> {
+  if ((options?.fusionDepth ?? 0) >= 1) {
+    return {
+      status: "error",
+      error: "Fusion already invoked in this turn",
+      failure_reason: "fusion_invocation_capped",
+    };
+  }
+
+  validateConfig(config);
+
+  const searchApiKeyEnv = config.search?.apiKeyEnv ?? "EXA_API_KEY";
+  const searchApiKey = process.env[searchApiKeyEnv] ?? "";
+
+  const panelMembers: ResolvedPanelMember[] = [];
+  const resolveErrors: FusionFailure[] = [];
+  for (const m of config.panel) {
+    try {
+      panelMembers.push(resolveMember(m));
+    } catch (err) {
+      resolveErrors.push({ model: m.model, reason: (err as Error).message });
+    }
+  }
+
+  let judge: ResolvedPanelMember;
+  try {
+    judge = resolveMember(config.judge);
+  } catch (err) {
+    judge = panelMembers[0] ?? resolveMember({ model: "deepseek-chat", preset: "deepseek" });
+  }
+
+  if (panelMembers.length === 0) {
+    return {
+      status: "error",
+      error: "No panel models configured or all failed to resolve",
+      failure_reason: "insufficient_credits",
+    };
+  }
+
+  const panelResults = await Promise.allSettled(
+    panelMembers.map((m) =>
+      runWithTools(m, PANEL_SYSTEM_PROMPT, prompt, PANEL_TOOLS, searchApiKey, {
+        maxToolCalls: config.maxToolCalls,
+        maxTokens: config.maxCompletionTokens,
+        temperature: config.temperature,
+      }),
+    ),
+  );
+
+  const responses: FusionResponse[] = [];
+  const failedModels: FusionFailure[] = [...resolveErrors];
+
+  for (let i = 0; i < panelResults.length; i++) {
+    const result = panelResults[i];
+    const model = panelMembers[i].model;
+    if (result.status === "fulfilled") {
+      responses.push({ model, content: result.value.content });
+    } else {
+      const err = result.reason;
+      let reason: string;
+      if (err?.type === "auth_error") reason = "authentication_failed";
+      else if (err?.type === "rate_limited") reason = "rate_limited";
+      else if (err?.type === "timeout") reason = "timeout";
+      else reason = err?.message ?? "unknown error";
+      failedModels.push({ model, reason });
+    }
+  }
+
+  if (responses.length === 0) {
+    const hasAuth = failedModels.some((f) => f.reason === "authentication_failed");
+    const hasRate = failedModels.some((f) => f.reason === "rate_limited");
+    let failureReason: "all_panels_failed" | "insufficient_credits" | "rate_limited";
+    if (hasAuth) failureReason = "insufficient_credits";
+    else if (hasRate) failureReason = "rate_limited";
+    else failureReason = "all_panels_failed";
+    return {
+      status: "error",
+      error: "All panel models failed",
+      failure_reason: failureReason,
+    };
+  }
+
+  if (responses.length < 2) {
+    return {
+      status: "ok",
+      responses,
+      failed_models: failedModels.length > 0 ? failedModels : undefined,
+    };
+  }
+
+  const { system, user } = buildJudgePrompt(prompt, responses);
+  let judgeResponse: { content: string };
+  try {
+    judgeResponse = await runWithTools(judge, system, user, PANEL_TOOLS, searchApiKey, {
+      maxToolCalls: config.maxToolCalls,
+      maxTokens: config.maxCompletionTokens,
+      temperature: config.temperature,
+    });
+  } catch {
+    return {
+      status: "ok",
+      responses,
+      failed_models: failedModels.length > 0 ? failedModels : undefined,
+    };
+  }
+
+  let analysis: FusionAnalysis;
+  try {
+    let jsonText = judgeResponse.content.trim();
+    if (jsonText.startsWith("```")) {
+      jsonText = jsonText.replace(/^```(?:json)?\s*\n?/, "").replace(/\n?```\s*$/, "");
+    }
+    analysis = JSON.parse(jsonText) as FusionAnalysis;
+  } catch {
+    try {
+      const retrySystem = `${system}\n\nYou MUST return ONLY valid JSON. No markdown fences, no commentary.`;
+      const retry = await runWithTools(judge, retrySystem, user, [], searchApiKey, {
+        maxTokens: config.maxCompletionTokens,
+        temperature: 0.3,
+      });
+      let jsonText = retry.content.trim();
+      if (jsonText.startsWith("```")) {
+        jsonText = jsonText.replace(/^```(?:json)?\s*\n?/, "").replace(/\n?```\s*$/, "");
+      }
+      analysis = JSON.parse(jsonText) as FusionAnalysis;
+    } catch {
+      return {
+        status: "ok",
+        responses,
+        failed_models: failedModels.length > 0 ? failedModels : undefined,
+      };
+    }
+  }
+
+  return {
+    status: "ok",
+    analysis,
+    responses,
+    failed_models: failedModels.length > 0 ? failedModels : undefined,
+  };
+}
