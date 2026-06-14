@@ -17,8 +17,9 @@ export default function (pi: ExtensionAPI) {
       "Multi-model deliberation: fans out your query to 3+ AI models in parallel (each with web search), then a judge synthesizes structured analysis showing consensus, contradictions, unique insights, and blind spots. Matches OpenRouter Fusion architecture. Use for complex reasoning, architecture decisions, code review, debugging hard problems, or evaluating tradeoffs. ~$0.01/query.",
     promptSnippet: "Fusion: fan out query to 3+ models for deliberation with judge synthesis",
     promptGuidelines: [
-      "Use fusion when you need multiple perspectives on a complex question — architecture decisions, code review of significant changes, debugging hard problems, or evaluating tradeoffs.",
-      "Do NOT use fusion for simple factual questions, trivial file operations, or when latency matters (fusion takes 10-30 seconds).",
+      "Use fusion for complex decisions where multiple perspectives improve the outcome: architecture choices, security review, hard debugging, technology evaluation. Apply the $0.01 test — is this decision worth 1 cent and 30-120 seconds?",
+      "Do NOT use fusion for: simple facts, trivial file operations, questions you're already confident about, or when the user is waiting interactively. Do not call fusion iteratively — frame your prompt thoroughly the first time.",
+      "Batch multiple fusion-worthy questions into one deliberation. Read the output actively: act on consensus, resolve contradictions with evidence, verify unique insights before depending on them, and use blind spots as your action items.",
     ],
     parameters: Type.Object({
       prompt: Type.String({
