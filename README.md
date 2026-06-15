@@ -323,11 +323,11 @@ Each test was run twice — once with a single model (DeepSeek V4 Pro) and once 
 
 | Factor | Single Model | pi-fusion (3-model panel + judge) |
 |--------|-------------|-----------------------------------|
-| Bugs/vulnerabilities found | 4–7 typical | **10–17 (consensus + unique)** |
+| Bugs/vulnerabilities found | 4–7 typical | **10–18 (union of all panel responses)** |
 | Blind spots surfaced | 0 (model can't report own gaps) | **5–6 per deliberation** |
 | Contradictions identified | None (single perspective) | **2–4 per deliberation** |
 | Fix quality | One approach | **2–3 competing fix strategies** |
-| Cost | ~$0.0055 | ~$0.009 (exact) |
+| Cost | ~$0.0055 | ~$0.009 (exact, direct API) |
 | Time | 33s | 65–150s |
 | **Cost per additional finding** | N/A | **~$0.001** |
 

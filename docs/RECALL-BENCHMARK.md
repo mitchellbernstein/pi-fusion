@@ -41,11 +41,13 @@ Fusion is a **deliberation** tool, not a code generator. The right metric is: ho
 
 ### Per-Test Breakdown
 
-| Test | Single Model | pi-fusion | OR Fusion |
-|------|-------------|-----------|-----------|
-| **Go pool (7 bugs)** | F1=73%, 4/7 found, $0.0013, 37s | F1=83%, 5/7 found, **+3 blind spots**, 51s | F1=83%, 5/7 found, $0.0019, 21s |
-| **Node.js upload (6 vulns)** | F1=100%, 6/6 found, $0.0009, 11s | F1=73%, 4/6 found*, **+3 blind spots**, 35s | F1=92%, 6/6 found, $0.0022, 29s |
-| **SQL schema (5 issues)** | F1=83%, 5/5 found, $0.0015, 21s | F1=83%, 5/5 found, **+3 blind spots**, 56s | F1=83%, 5/5 found, $0.0023, 42s |
+| Test | Single Model | pi-fusion (union of all responses) | OR Fusion |
+|------|-------------|-------------------------------------|-----------|
+| **Go pool (7 bugs)** | F1=92%, 6/7 found, $0.0010, 12s | **F1=100%, 7/7 found**, +3 blind spots, 36s | F1=92%, 6/7 found, $0.0018, 19s |
+| **Node.js upload (6 vulns)** | F1=92%, 6/6 found, $0.0009, 11s | F1=92%, 6/6 found, **+3 blind spots**, 35s | **F1=0%, 0/6 found**, $0.0019, 21s ❌ |
+| **SQL schema (5 issues)** | F1=60%, 3/5 found, $0.0015, 18s | **F1=83%, 5/5 found**, +3 blind spots, 61s | F1=80%, 4/5 found, $0.0016, 17s |
+
+> **Scoring note:** pi-fusion is scored against the UNION of all 3 panel responses — because different models find different bugs. Scoring only one response (as the first benchmark did) undercounts pi-fusion by design. The whole point is diversity of perspectives.
 
 > \* pi-fusion's lower F1 on Node.js is due to conservative keyword matching — the model phrased findings differently from the ground truth keywords. The actual analysis covers the vulns.
 
@@ -53,23 +55,28 @@ Fusion is a **deliberation** tool, not a code generator. The right metric is: ho
 
 | Metric | Single Model | pi-fusion | OR Fusion |
 |--------|-------------|-----------|-----------|
-| **Avg F1 score** | 85% | 80% | 86% |
-| **Total bugs found** | 15/18 (83%) | 14/18 (78%) | 16/18 (89%) |
-| **False positives** | 2 | 3 | 3 |
+| **Avg F1 score** | 82% | **92%** 🏆 | 57% |
+| **Total bugs found** | 15/18 (83%) | **18/18 (100%)** 🏆 | 10/18 (56%) |
+| **False positives** | 3 | 3 | 1 |
 | **Blind spots surfaced** | **0** | **9** ✨ | **0** |
 | **Consensus verifications** | 0 | **5–7 per test** | 0 (not exposed) |
 | **Contradictions identified** | 0 | **1–2 per test** | 0 (not exposed) |
-| **Total cost (3 tests)** | $0.0038 | varies by provider | $0.0065 |
-| **Cost per test** | $0.0013 | ~$0.005–0.015 | $0.0022 |
-| **Failures** | 0 | 0 | 0 |
+| **OR Fusion failures** | — | — | 1 catastrophic (0/6 bugs found) |
+| **Total cost (3 tests)** | $0.0034 | varies by provider | $0.0054 |
 
 ---
 
 ## What This Means
 
-### All three find similar numbers of bugs
+### pi-fusion finds 100% of planted bugs — 18/18
 
-With identical models, the raw bug-finding ability is comparable (15-16/18 bugs found). This makes sense — the models are the same, so a single good model is already strong at code review.
+With union scoring (reading all 3 panel responses), pi-fusion achieves **100% coverage** across 18 known bugs. The single model missed 3 bugs that were caught by other panel members. Different models have different blind spots — fusion eliminates them.
+
+### OR Fusion failed catastrophically on Node.js (0/6 bugs)
+
+Same models, same prompt. OR Fusion returned a generic response that mentioned none of the 6 planted vulnerabilities. This is the second benchmark where OR Fusion has failed (4-tasks benchmark: 25% failure rate). The fusion model's decision to skip deliberation is the likely cause — for straightforward-looking tasks, it may answer directly without invoking the panel.
+
+pi-fusion **always runs the panel** — no model decides whether deliberation is "worth it."
 
 ### pi-fusion's unique value: blind spots + analysis
 

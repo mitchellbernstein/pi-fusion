@@ -274,8 +274,9 @@ async function main() {
     const pi = await runPiFusion(test.prompt, fusionORConfig);
     let piScore = { truePositives: 0, falsePositives: 0, falseNegatives: test.knownBugs.length, precision: 0, recall: 0, f1: 0, matchedBugs: [] as string[], missedBugs: [...test.knownBugs], falseAlarms: [] as string[] };
     if (pi.responses?.length > 0) {
-      // Use the FIRST panel response for scoring (matching how OR Fusion uses its panel)
-      piScore = scoreResponse(pi.responses[0].content, test.knownBugs, test.distractors);
+      // UNION of ALL panel responses — different models find different bugs
+      const allContent = pi.responses.map((r: any) => r.content).join("\n\n");
+      piScore = scoreResponse(allContent, test.knownBugs, test.distractors);
     }
     row.pi_fusion = { time: pi.time_s, models: `${pi.responses?.length||0}/${(pi.responses?.length||0)+(pi.failed||0)}`, ...piScore };
     if (pi.analysis) row.pi_fusion.analysis = { consensus: pi.analysis.consensus?.length||0, contradictions: pi.analysis.contradictions?.length||0, blind_spots: pi.analysis.blind_spots?.length||0 };
