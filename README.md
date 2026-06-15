@@ -197,7 +197,7 @@ Minimum 3 panel models — no maximum. Any OpenAI-compatible endpoint works.
 | **Credit pre-purchase** | Required (buy credits → spend) | Not required (pay provider directly) |
 | **Where your money goes** | Provider + 5.5% OpenRouter platform fee on credit purchases | Provider only |
 
-The cost difference isn't about platform markup — OpenRouter passes through provider pricing at cost. The difference is **model selection**: pi-fusion defaults to cheap models (DeepSeek $0.50/$2.00 per 1M tokens), while OpenRouter Fusion's Quality preset uses expensive frontier models (Claude $3/$15, GPT-4o $2.50/$10). Both platforms let you configure cheaper models — pi-fusion just starts there.
+The cost difference isn't about platform markup — OpenRouter passes through provider pricing at cost. The difference is **model selection**: pi-fusion defaults to cheap models (DeepSeek $0.50/$2.00 per 1M tokens), while OpenRouter Fusion's Quality preset uses expensive frontier models (Claude $15/$75, GPT-4o $2.50/$10). Both platforms let you configure cheaper models — pi-fusion just starts there. [Full head-to-head comparison →](docs/OR-FUSION-COMPARISON.md).
 
 ---
 
@@ -292,6 +292,7 @@ Each test was run twice — once with a single model (DeepSeek V4 Pro) and once 
 **Bottom line:** For $0.02 and ~2 minutes, fusion surfaces 2-3× more issues, identifies what no single model thought of, and reveals where experts disagree. The new panel (DeepSeek + MiniMax + **Gemini Flash**) achieves **75% 3/3 response rate** in testing. Uses your own API keys — pay providers directly, no intermediary markup or credit pre-purchase needed.
 
 **Documentation:**
-- [Fusion vs Single Model](docs/FUSION-VS-SINGLE.md) — flagship comparison: what you get for $0.02 and 2 minutes
-- [Cost Analysis](docs/COST-ANALYSIS.md) — per-test cost breakdown across all 9 tests (~$0.16 total)
+- [OpenRouter Fusion Cost Comparison](docs/OR-FUSION-COMPARISON.md) — head-to-head with same models: costs are nearly identical, difference is model selection
+- [Fusion vs Single Model](docs/FUSION-VS-SINGLE.md) — what you get for $0.02 and 2 minutes
+- [Cost Analysis](docs/COST-ANALYSIS.md) — per-test cost breakdown across 13 tests (~$0.24 total)
 - [Rate Limiting & Reliability](docs/RATE-LIMITING.md) — root cause analysis, reasoning model support, per-tool timeouts
