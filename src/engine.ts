@@ -181,14 +181,14 @@ export async function fusionCall(
     const { system: vSystem, user: vUser } = buildVerifierPrompt(prompt, responses, analysis);
     const verifierResponse = await runWithTools(judge, vSystem, vUser, [], searchApiKey, {
       maxTokens: config.maxCompletionTokens,
-      temperature: 0.2,
+      temperature: 0,
     });
     let vText = verifierResponse.content.trim();
     if (vText.startsWith("```")) {
       vText = vText.replace(/^```(?:json)?\s*\n?/, "").replace(/\n?```\s*$/, "");
     }
     const verified = JSON.parse(vText) as FusionAnalysis;
-    // Merge: use verified data, keeping originals as fallback
+    // Use verified data, keeping originals as fallback
     analysis = verified;
   } catch {
     // Verifier failed — keep original analysis. Better than nothing.

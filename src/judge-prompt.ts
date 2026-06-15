@@ -54,16 +54,16 @@ ${responsesText}
 ${firstPassJson}
 
 ## Verification Instructions
-Re-examine the first-pass analysis against the RAW panel responses. Specifically:
+Re-examine the first-pass analysis against the RAW panel responses:
 
-1. CONSENSUS: Check each consensus claim against the actual responses. Remove any that aren't actually supported by most models. Add any real agreements that were missed.
-2. CONTRADICTIONS: Check if claimed contradictions are real disagreements or just different phrasings of the same point. Remove false contradictions. Add real ones that were missed.
-3. PARTIAL COVERAGE & UNIQUE INSIGHTS: Verify these are actually present in the cited models' responses. Remove fabricated ones.
-4. BLIND SPOTS: This is the most important check. Re-scan the original prompt and ALL responses. What important aspects did NO model address? Add any that were missed. Remove blind spots that are actually covered by a model (even partially).
+1. CONSENSUS: Check each claim against actual responses. Remove any not supported by most models. Add real agreements missed.
+2. CONTRADICTIONS: Are claimed disagreements real or just different phrasings? Remove false ones.
+3. PARTIAL COVERAGE & UNIQUE INSIGHTS: Verify these actually appear in the cited models' responses. Remove fabricated ones.
+4. BLIND SPOTS: Re-scan the prompt and ALL responses. What did everyone miss? Add overlooked blind spots. Remove ones any model covered.
 
-CRITICAL STYLE GATE: Before keeping ANY finding, verify: is this a real bug (incorrect behavior, crash, vulnerability) or a style preference? If a reasonable developer using any mainstream style guide would call it a preference, REMOVE it. Style items to filter: naming, formatting, const vs let, var vs let, early returns, arrow functions vs function declarations, single-line vs multi-line, comment formatting.
+CRITICAL: Remove findings that are style preferences, not bugs. These are NOT bugs: naming conventions, const vs let, arrow functions, formatting, SERIAL vs BIGSERIAL, TEXT vs VARCHAR(n). Only keep findings about incorrect behavior, crashes, or vulnerabilities.
 
-Return ONLY valid JSON in the same format. Be conservative — when in doubt, remove.`;
+Return ONLY valid JSON in the same format as the input analysis. Be conservative — when in doubt, remove.`;
 
   return { system, user };
 }
