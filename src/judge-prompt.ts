@@ -23,6 +23,8 @@ ${responsesText}
 4. UNIQUE INSIGHTS: Identify valuable points that only ONE model raised. Include the model name and the specific insight.
 5. BLIND SPOTS: Identify important aspects of the original question that NO model addressed. What did everyone miss?
 
+Before finalizing, review every flagged issue against this standard: Would a reasonable developer consider this a blocking defect? If the issue could be addressed by a linter rule or is a style preference (naming, formatting, const/let, early returns), DO NOT include it. Only keep findings that would cause incorrect behavior, crashes, or security vulnerabilities.
+
 Return ONLY valid JSON in this exact format (no markdown fences, no surrounding text):
 {"consensus":["string"],"contradictions":[{"topic":"string","stances":[{"model":"string","stance":"string"}]}],"partial_coverage":[{"models":["string"],"point":"string"}],"unique_insights":[{"model":"string","insight":"string"}],"blind_spots":["string"]}`;
 
@@ -59,7 +61,9 @@ Re-examine the first-pass analysis against the RAW panel responses. Specifically
 3. PARTIAL COVERAGE & UNIQUE INSIGHTS: Verify these are actually present in the cited models' responses. Remove fabricated ones.
 4. BLIND SPOTS: This is the most important check. Re-scan the original prompt and ALL responses. What important aspects did NO model address? Add any that were missed. Remove blind spots that are actually covered by a model (even partially).
 
-Return ONLY valid JSON in the same format as the input analysis (consensus, contradictions, partial_coverage, unique_insights, blind_spots). Be conservative — remove things you're not confident about.`;
+CRITICAL STYLE GATE: Before keeping ANY finding, verify: is this a real bug (incorrect behavior, crash, vulnerability) or a style preference? If a reasonable developer using any mainstream style guide would call it a preference, REMOVE it. Style items to filter: naming, formatting, const vs let, var vs let, early returns, arrow functions vs function declarations, single-line vs multi-line, comment formatting.
+
+Return ONLY valid JSON in the same format. Be conservative — when in doubt, remove.`;
 
   return { system, user };
 }

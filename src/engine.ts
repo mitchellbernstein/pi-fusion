@@ -15,10 +15,12 @@ Then provide a thorough but concise response. Avoid excessive meta-commentary or
 
 // Role-based deliberation: each panel model gets a different analytical lens.
 // This mirrors how human code review teams work — different people check different things.
+const STYLE_GATE = `IMPORTANT: Only report issues that cause incorrect behavior, security vulnerabilities, or runtime failures. Do NOT flag style preferences (naming, formatting, const vs let, early returns, etc.). If the code would work correctly under real inputs, it is NOT a bug.`;
+
 const ROLE_PROMPTS = [
-  `Your specific role: focus on CORRECTNESS. Look for logic errors, off-by-one bugs, null/nil handling, algorithmic flaws, and incorrect assumptions. What would actually break in production?`,
-  `Your specific role: focus on SECURITY & ROBUSTNESS. Look for injection vectors, race conditions, resource leaks, error handling gaps, and input validation. What could an attacker exploit? What fails under load?`,
-  `Your specific role: focus on EDGE CASES & MISSING REQUIREMENTS. Look for boundary conditions, implicit assumptions, missing error states, and unhandled scenarios. What happens at scale? What if inputs are malformed?`,
+  `${STYLE_GATE}\n\nYour specific role: focus on CORRECTNESS. Look for logic errors, off-by-one bugs, null/nil handling, algorithmic flaws, and incorrect assumptions. What would actually break in production? Only flag issues that cause wrong behavior.`,
+  `${STYLE_GATE}\n\nYour specific role: focus on SECURITY & ROBUSTNESS. Look for injection vectors, race conditions, resource leaks, error handling gaps, and input validation. What could an attacker exploit? What fails under load? Only flag exploitable or crash-inducing issues.`,
+  `${STYLE_GATE}\n\nYour specific role: focus on EDGE CASES & MISSING REQUIREMENTS. Look for boundary conditions, implicit assumptions, missing error states, and unhandled scenarios. What happens at scale? What if inputs are malformed? Only flag gaps that cause incorrect behavior.`,
 ];
 
 export async function fusionCall(
