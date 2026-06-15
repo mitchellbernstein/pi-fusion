@@ -402,6 +402,10 @@ async function main() {
     results.push(row);
     fs.writeFileSync("/tmp/fusion-semantic.json", JSON.stringify(results, null, 2));
   }
+  // Compute blind spots before summary
+  const piBS = results.reduce((s: number, r: any) => s + (r.pi_fusion?.analysis?.blind_spots || 0), 0);
+  const orErrors = results.filter((r: any) => r.or_fusion?.error).length;
+
   // Summary with multiple metrics beyond just F1
   const precision_s = totalSingleTP / (totalSingleTP + totalSingleFP) || 0;
   const precision_pi = totalPiTP / (totalPiTP + totalPiFP) || 0;
