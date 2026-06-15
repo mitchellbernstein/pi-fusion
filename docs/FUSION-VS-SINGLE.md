@@ -180,11 +180,14 @@ These are findings you'd pay a senior engineer $200/hour to catch. Fusion produc
 
 ### vs OpenRouter Fusion
 
-| Metric | OpenRouter Fusion | pi-fusion |
-|--------|------------------|-----------|
-| Cost per query | ~$0.70 | **~$0.021** |
-| Cost for 4 queries | ~$2.80 | **~$0.084** |
-| Effective savings | — | **~33× cheaper** |
+OpenRouter Fusion's default panel (Quality preset) uses expensive frontier models (Claude, GPT-4o, Gemini Pro) at ~$0.40–0.70/query. pi-fusion defaults to cheap models (DeepSeek, MiniMax, Gemini Flash) with direct API keys:
+
+| Metric | OpenRouter Fusion (Quality) | pi-fusion |
+|--------|------------------------------|-----------|
+| Cost per query | ~$0.40–0.70 | **~$0.021** |
+| Cost for 4 queries | ~$2.00 | **~$0.084** |
+| Why the difference | Frontier model pricing | Budget model pricing + direct API keys |
+| Intermediary | OpenRouter platform + credit purchase | Direct provider billing |
 | Output quality | Same format | Same format + degradation handling |
 
 ---

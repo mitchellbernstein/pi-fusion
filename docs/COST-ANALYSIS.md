@@ -158,16 +158,16 @@ Elapsed: 228s. 10 consensus, 6 contradictions, 6 unique insights, 10 blind spots
 
 ## Comparison to OpenRouter Fusion
 
-| Metric | OpenRouter Fusion | pi-fusion (9 tests) |
-|--------|------------------|---------------------|
-| Cost per query | ~$0.70 | ~$0.018 avg |
-| Cost for 9 queries | ~$6.30 | **~$0.16** |
-| Savings | — | **~39× cheaper** |
+| Metric | OpenRouter Fusion (Quality) | pi-fusion (13 tests) |
+|--------|------------------------------|---------------------|
+| Cost per query | ~$0.40–0.70 (frontier models) | ~$0.019 avg (budget models) |
+| Cost for 13 queries | ~$5–9 | **~$0.24** |
+| Why the difference | Default panel: Claude, GPT-4o, Gemini Pro | Default panel: DeepSeek, MiniMax, Gemini Flash |
 | Web search | ✅ | ✅ (Exa) |
 | Custom models | Paid only | Any OpenAI-compatible |
+| API keys | OpenRouter credits | Your own provider keys — no intermediary |
 | Degradation handling | ❌ (all-or-nothing) | ✅ (graceful fallback) |
-| Judge-capped queries | 0% | 67% |
-| All-panels-failed rate | Unknown | 0% (0/9) |
+| All-panels-failed rate | Unknown | 0% (0/13) |
 
 ---
 

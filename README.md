@@ -192,7 +192,12 @@ Minimum 3 panel models — no maximum. Any OpenAI-compatible endpoint works.
 | Tool-calling loop | ✅ (max 8) | ✅ (max 8) |
 | Output schema | consensus, contradictions, etc. | same structure |
 | Custom models | Paid only | Any OpenAI-compatible |
-| **Cost per query** | ~$0.70 (at time of testing) | **~$0.01** |
+| **Default panel cost** | ~$0.40–0.70 (Quality preset: Claude, GPT-4o, Gemini Pro) | **~$0.02** (DeepSeek, MiniMax, Gemini Flash) |
+| **Intermediary** | OpenRouter (routes to providers) | None — direct API keys |
+| **Credit pre-purchase** | Required (buy credits → spend) | Not required (pay provider directly) |
+| **Where your money goes** | Provider + 5.5% OpenRouter platform fee on credit purchases | Provider only |
+
+The cost difference isn't about platform markup — OpenRouter passes through provider pricing at cost. The difference is **model selection**: pi-fusion defaults to cheap models (DeepSeek $0.50/$2.00 per 1M tokens), while OpenRouter Fusion's Quality preset uses expensive frontier models (Claude $3/$15, GPT-4o $2.50/$10). Both platforms let you configure cheaper models — pi-fusion just starts there.
 
 ---
 
@@ -208,8 +213,8 @@ Minimum 3 panel models — no maximum. Any OpenAI-compatible endpoint works.
 
 - **llm-council** (Karpathy): Python, web app interface, no web tools, abandoned. Wrong language and wrong schema.
 - **consilium**: Rust, no web tools, different output schema. Great project but doesn't match OpenRouter Fusion's architecture.
-- **OpenRouter Fusion**: Same deliberation pattern but ~$0.70/query and model-locked to OpenRouter's marketplace.
-- **pi-fusion**: Follows the same deliberation pattern, works with any OpenAI-compatible endpoint, and costs ~$0.01/query.
+- **OpenRouter Fusion**: Same deliberation pattern. Defaults to expensive frontier models (~$0.40–0.70/query), routes through OpenRouter platform, requires credit pre-purchase.
+- **pi-fusion**: Same deliberation pattern. Defaults to budget models (~$0.02/query), works with any OpenAI-compatible endpoint, uses your own API keys directly — no intermediary, no credit purchase needed.
 
 ---
 
@@ -284,7 +289,7 @@ Each test was run twice — once with a single model (DeepSeek V4 Pro) and once 
 | Time | 33s | 156s |
 | **Cost per additional finding** | N/A | **~$0.001** |
 
-**Bottom line:** For $0.02 and ~2 minutes (down from ~3), fusion surfaces 2-3× more issues, identifies what no single model thought of, and reveals where experts disagree. The new panel (DeepSeek + MiniMax + **Gemini Flash**) achieves **100% 3/3 response rate** in testing — dramatically better than the original panel (44%). Still 39× cheaper than OpenRouter Fusion (~$0.70/query).
+**Bottom line:** For $0.02 and ~2 minutes, fusion surfaces 2-3× more issues, identifies what no single model thought of, and reveals where experts disagree. The new panel (DeepSeek + MiniMax + **Gemini Flash**) achieves **75% 3/3 response rate** in testing. Uses your own API keys — pay providers directly, no intermediary markup or credit pre-purchase needed.
 
 **Documentation:**
 - [Fusion vs Single Model](docs/FUSION-VS-SINGLE.md) — flagship comparison: what you get for $0.02 and 2 minutes
