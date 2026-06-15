@@ -334,7 +334,8 @@ Each test was run twice — once with a single model (DeepSeek V4 Pro) and once 
 **Bottom line:** For $0.02 and ~2 minutes, fusion surfaces 2-3× more issues, identifies what no single model thought of, and reveals where experts disagree. The new panel (DeepSeek + MiniMax + **Gemini Flash**) achieves **75% 3/3 response rate** in testing. Uses your own API keys — pay providers directly, no intermediary markup or credit pre-purchase needed.
 
 **Documentation:**
-- [OpenRouter Fusion Cost Comparison](docs/OR-FUSION-COMPARISON.md) — head-to-head with same models: costs are nearly identical, difference is model selection
+- [**Benchmark: Single vs Fusion vs OR Fusion**](docs/BENCHMARK.md) — 4 coding tasks, same models, 4 scenarios. DeepSeek direct = 97% quality. OR Fusion = 25% failure rate.
+- [OpenRouter Fusion Cost Comparison](docs/OR-FUSION-COMPARISON.md) — head-to-head with same models: pi-fusion $0.009 vs OR Fusion $0.033
 - [Fusion vs Single Model](docs/FUSION-VS-SINGLE.md) — what you get for $0.02 and 2 minutes
 - [Cost Analysis](docs/COST-ANALYSIS.md) — per-test cost breakdown across 13 tests (~$0.24 total)
 - [Rate Limiting & Reliability](docs/RATE-LIMITING.md) — root cause analysis, reasoning model support, per-tool timeouts
