@@ -13,6 +13,14 @@ Before answering, think through the problem systematically:
 
 Then provide a thorough but concise response. Avoid excessive meta-commentary or internal reasoning visible to the user.`;
 
+// Role-based deliberation: each panel model gets a different analytical lens.
+// This mirrors how human code review teams work — different people check different things.
+const ROLE_PROMPTS = [
+  `Your specific role: focus on CORRECTNESS. Look for logic errors, off-by-one bugs, null/nil handling, algorithmic flaws, and incorrect assumptions. What would actually break in production?`,
+  `Your specific role: focus on SECURITY & ROBUSTNESS. Look for injection vectors, race conditions, resource leaks, error handling gaps, and input validation. What could an attacker exploit? What fails under load?`,
+  `Your specific role: focus on EDGE CASES & MISSING REQUIREMENTS. Look for boundary conditions, implicit assumptions, missing error states, and unhandled scenarios. What happens at scale? What if inputs are malformed?`,
+];
+
 export async function fusionCall(
   prompt: string,
   config: FusionConfig,
@@ -59,9 +67,11 @@ export async function fusionCall(
   const perModelTimeoutMs = config.perModelTimeoutMs ?? 90_000;
 
   const panelResults = await Promise.allSettled(
-    panelMembers.map((m) =>
-      Promise.race([
-        runWithTools(m, PANEL_SYSTEM_PROMPT, prompt, PANEL_TOOLS, searchApiKey, {
+    panelMembers.map((m, i) => {
+      const rolePrompt = ROLE_PROMPTS[i % ROLE_PROMPTS.length];
+      const fullSystemPrompt = PANEL_SYSTEM_PROMPT + "\n\n" + rolePrompt;
+      return Promise.race([
+        runWithTools(m, fullSystemPrompt, prompt, PANEL_TOOLS, searchApiKey, {
           maxToolCalls: config.maxToolCalls,
           maxTokens: config.maxCompletionTokens,
           temperature: config.temperature,
@@ -71,8 +81,8 @@ export async function fusionCall(
           setTimeout(() => reject(new (class PerModelTimeout extends Error { type = "timeout" })())
             , perModelTimeoutMs),
         ),
-      ]),
-    ),
+      ]);
+    }),
   );
 
   const responses: FusionResponse[] = [];
