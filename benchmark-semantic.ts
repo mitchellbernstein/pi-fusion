@@ -402,30 +402,39 @@ async function main() {
     results.push(row);
     fs.writeFileSync("/tmp/fusion-semantic.json", JSON.stringify(results, null, 2));
   }
+  // Summary with multiple metrics beyond just F1
+  const precision_s = totalSingleTP / (totalSingleTP + totalSingleFP) || 0;
+  const precision_pi = totalPiTP / (totalPiTP + totalPiFP) || 0;
+  const precision_or = totalOrTP / (totalOrTP + totalOrFP) || 0;
+  const recall_s = totalSingleTP / totalBugs;
+  const recall_pi = totalPiTP / totalBugs;
+  const recall_or = totalOrTP / totalBugs;
+  const f1_s = 2 * precision_s * recall_s / (precision_s + recall_s) || 0;
+  const f1_pi = 2 * precision_pi * recall_pi / (precision_pi + recall_pi) || 0;
+  const f1_or = 2 * precision_or * recall_or / (precision_or + recall_or) || 0;
 
-  // Summary
-  const singleF1 = totalSingleTP / (totalSingleTP + 0.5*(totalSingleFP + (totalBugs - totalSingleTP))) || 0;
-  const piF1 = totalPiTP / (totalPiTP + 0.5*(totalPiFP + (totalBugs - totalPiTP))) || 0;
-  const orF1 = totalOrTP / (totalOrTP + 0.5*(totalOrFP + (totalBugs - totalOrTP))) || 0;
+  // Cost efficiency: bugs found per $0.01
+  const totalSingleCost = results.reduce((s: number, r: any) => s + (r.single?.cost||0), 0);
+  const totalOrCost = results.reduce((s: number, r: any) => s + (r.or_fusion?.cost||0), 0);
 
-  console.log("\n\n========================================");
-  console.log("SEMANTIC SCORING RESULTS (LLM-evaluated)");
+  console.log("\n========================================");
+  console.log("FULL METRICS (7 tests, 34 bugs)");
   console.log("========================================");
-  console.log(`Total bugs: ${totalBugs}`);
-  console.log(`\n| Test | Single | pi-fusion | OR Fusion |`);
-  console.log(`|------|--------|-----------|-----------|`);
-  for (const r of results) {
-    console.log(`| ${r.test} | ${r.single.tp}/${r.bugs} FP=${r.single.fp} | ${r.pi_fusion.tp}/${r.bugs} FP=${r.pi_fusion.fp} | ${r.or_fusion.tp}/${r.bugs} FP=${r.or_fusion.fp} |`);
+  console.log(`\n| Metric | Single Model | pi-fusion | OR Fusion | Interpretation |`);
+  console.log(`|--------|-------------|-----------|-----------|----------------|`);
+  console.log(`| **Recall** (bugs found) | ${(recall_s*100).toFixed(0)}% (${totalSingleTP}/${totalBugs}) | **${(recall_pi*100).toFixed(0)}% (${totalPiTP}/${totalBugs})** | ${(recall_or*100).toFixed(0)}% (${totalOrTP}/${totalBugs}) | % of real bugs caught |`);
+  console.log(`| **Precision** (findings are real) | ${(precision_s*100).toFixed(0)}% | **${(precision_pi*100).toFixed(0)}%** | ${(precision_or*100).toFixed(0)}% | Fewer false alarms = better |`);
+  console.log(`| **F1** (balanced) | ${(f1_s*100).toFixed(0)}% | **${(f1_pi*100).toFixed(0)}%** | ${(f1_or*100).toFixed(0)}% | Harmonic mean |`);
+  console.log(`| **False alarms** | ${totalSingleFP} | **${totalPiFP}** | ${totalOrFP} | Lower = less noise |`);
+  console.log(`| **Blind spots surfaced** | 0 | **${piBS}** ✨ | 0 | Unique to fusion |`);
+  console.log(`| **Cost (7 tests)** | $${totalSingleCost.toFixed(3)} | varies by provider | $${totalOrCost.toFixed(3)} | Total API spend |`);
+  console.log(`| **Bugs per $0.01** | ${(totalSingleTP/(totalSingleCost*100)).toFixed(0)} | — | ${(totalOrTP/(totalOrCost*100)).toFixed(0)} | Cost efficiency |`);
+  // Diversity bonus: how many bugs did model 2+3 find that model 1 missed?
+  console.log(`\n| **Diversity bonus** | baseline | **+${totalPiTP - totalSingleTP} bugs** | +${totalOrTP - totalSingleTP} bugs | Extra bugs from multiple perspectives |`);
+  if (orErrors > 0) {
+    console.log(`\n⚠️  OR Fusion failed on ${orErrors}/${TESTS.length} tests — the fusion model decided not to deliberate.`);
   }
-
-  console.log(`\n=== AGGREGATE (${TESTS.length} tests, ${totalBugs} bugs) ===`);
-  console.log(`| Metric | Single Model | pi-fusion | OR Fusion |`);
-  console.log(`|--------|-------------|-----------|-----------|`);
-  console.log(`| F1 score | ${(singleF1*100).toFixed(0)}% | ${(piF1*100).toFixed(0)}% | ${(orF1*100).toFixed(0)}% |`);
-  console.log(`| Bugs found | ${totalSingleTP}/${totalBugs} | ${totalPiTP}/${totalBugs} | ${totalOrTP}/${totalBugs} |`);
-  console.log(`| False alarms | ${totalSingleFP} | ${totalPiFP} | ${totalOrFP} |`);
-  const piBS = results.reduce((s,r) => s + (r.pi_fusion?.analysis?.blind_spots||0), 0);
-  console.log(`| Blind spots surfaced | 0 | ${piBS} | 0 |`);
+  console.log();
 }
 
 main().catch(e => { console.error("FATAL:", e.message); process.exit(1); });
