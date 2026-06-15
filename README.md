@@ -2,7 +2,7 @@
 
 **Multi-model deliberation for pi** — fans out your query to 3+ AI models in parallel (each with web search), then a judge synthesizes structured analysis: consensus, contradictions, unique insights, and blind spots.
 
-Follows the same deliberation pattern as [OpenRouter Fusion](https://openrouter.ai/fusion) — parallel panel → judge synthesis — at **~$0.01/query** (OpenRouter Fusion charges ~$0.70/query at time of testing).
+Follows the same deliberation pattern as [OpenRouter Fusion](https://openrouter.ai/fusion) — parallel panel → judge synthesis. Same prompt costs **$0.009** on pi-fusion vs **$0.033** on OpenRouter Fusion (matched budget models) or **$0.134** (OpenRouter's default Quality preset). [Full head-to-head →](docs/OR-FUSION-COMPARISON.md)
 
 ---
 
@@ -84,13 +84,13 @@ echo "Is Rust or Go better for my use case?" | npx tsx src/cli.ts
 fusionCall(prompt)
   │
   ├─ Panel (parallel): each model answers independently, can search web
-  │   ├─ Model A (e.g. deepseek-v4-pro) + web_search/web_fetch
-  │   ├─ Model B (e.g. MiniMax-M3) + web_search/web_fetch
-  │   └─ Model C (e.g. moonshotai/kimi-k2.7-code) + web_search/web_fetch
+  │   ├─ Model A (e.g. deepseek-v4-pro via DeepSeek API)
+  │   ├─ Model B (e.g. MiniMax-M3 via MiniMax API)
+  │   └─ Model C (e.g. gemini-2.5-flash via OpenRouter)
   │
-  ├─ Collect: successes + failures
+  ├─ Collect: successes + failures + per-model token usage
   ├─ Judge: compares all responses + web search → structured JSON
-  └─ Return: FusionResult
+  └─ Return: FusionResult with per-model usage data
 ```
 
 Each model gets access to `web_search` and `web_fetch` tools (Exa API) and can make up to 8 tool calls per deliberation. The judge also has access to these tools.
@@ -184,6 +184,24 @@ Minimum 3 panel models — no maximum. Any OpenAI-compatible endpoint works.
 
 ## Compared to OpenRouter Fusion
 
+We tested the same prompt on both platforms with matched budget models (June 14, 2026). [Full methodology and raw data →](docs/OR-FUSION-COMPARISON.md)
+
+| Scenario | Platform | Models | Cost |
+|----------|----------|--------|------|
+| **Quality preset** (default) | OpenRouter Fusion | Claude 4.8 Opus, GPT-4o, Gemini 2.5 Pro | **$0.134** |
+| **Budget models** (matched) | OpenRouter Fusion | deepseek-chat, minimax-m1, gemini-2.5-flash | **$0.033** |
+| **Budget models** (default) | pi-fusion | deepseek-v4-pro, MiniMax-M3, gemini-2.5-flash | **$0.009** |
+
+### Why the 3.7× difference even with matched budget models?
+
+OpenRouter passes through provider pricing at cost — no per-query markup. The gap comes from:
+
+1. **System prompt overhead**: OpenRouter injects web_search/web_fetch tool definitions + orchestration prompts into every panel model. pi-fusion uses a minimal one-liner system prompt.
+2. **Direct API keys**: pi-fusion calls DeepSeek and MiniMax directly at their lowest pricing tier. OpenRouter routes through different model aliases that may land on different pricing.
+3. **Per-model isolation**: Each pi-fusion API call only sees the user's prompt. OpenRouter Fusion bundles the entire pipeline into one request, counting all intermediate tokens.
+
+### Feature comparison
+
 | Feature | OpenRouter Fusion | pi-fusion |
 |---------|------------------|-----------|
 | Parallel panel dispatch | ✅ | ✅ |
@@ -191,13 +209,37 @@ Minimum 3 panel models — no maximum. Any OpenAI-compatible endpoint works.
 | web_fetch per model | ✅ | ✅ (Exa) |
 | Tool-calling loop | ✅ (max 8) | ✅ (max 8) |
 | Output schema | consensus, contradictions, etc. | same structure |
-| Custom models | Paid only | Any OpenAI-compatible |
-| **Default panel cost** | ~$0.40–0.70 (Quality preset: Claude, GPT-4o, Gemini Pro) | **~$0.02** (DeepSeek, MiniMax, Gemini Flash) |
-| **Intermediary** | OpenRouter (routes to providers) | None — direct API keys |
-| **Credit pre-purchase** | Required (buy credits → spend) | Not required (pay provider directly) |
-| **Where your money goes** | Provider + 5.5% OpenRouter platform fee on credit purchases | Provider only |
+| Custom models | Paid only | Any OpenAI-compatible endpoint |
+| **API keys** | Buy OpenRouter credits (5.5% fee on purchases) | Your own provider keys — no intermediary |
+| **Degradation handling** | All-or-nothing (one model fails → fusion fails) | Graceful fallback (1 model → pass through, 2+ → judge runs) |
+| **Raw panel responses** | Not exposed | Returned alongside analysis |
+| **Per-model token tracking** | No | Yes — exact usage per model in response |
+| **Default cost** | $0.13 (Quality) / $0.03 (Budget) | **$0.009** |
 
-The cost difference isn't about platform markup — OpenRouter passes through provider pricing at cost. The difference is **model selection**: pi-fusion defaults to cheap models (DeepSeek $0.50/$2.00 per 1M tokens), while OpenRouter Fusion's Quality preset uses expensive frontier models (Claude $15/$75, GPT-4o $2.50/$10). Both platforms let you configure cheaper models — pi-fusion just starts there. [Full head-to-head comparison →](docs/OR-FUSION-COMPARISON.md).
+### How the test was run
+
+```
+Same prompt: "Evaluate whether Rust or Go is better for a high-throughput API server."
+Same time: June 14, 2026
+Same budget models: DeepSeek, MiniMax, Gemini Flash
+Same judge model: DeepSeek
+
+OpenRouter Fusion:
+  POST https://openrouter.ai/api/v1/chat/completions
+  { model: "openrouter/fusion", plugins: [{ id: "fusion",
+    analysis_models: ["deepseek/deepseek-chat", "minimax/minimax-m1",
+                      "google/gemini-2.5-flash"],
+    model: "deepseek/deepseek-chat" }] }
+  Cost from response: $0.033195 (3524 prompt + 389 completion tokens)
+
+pi-fusion:
+  Separate API calls to each provider:
+  - deepseek-v4-pro: 444p + 594c = $0.00141
+  - MiniMax-M3:      570p + 549c = $0.00138
+  - gemini-2.5-flash: 148p + 359c = $0.00024
+  - Judge (deepseek): ~4000p + ~2000c = $0.00600
+  Total: $0.00903
+```
 
 ---
 
@@ -213,8 +255,8 @@ The cost difference isn't about platform markup — OpenRouter passes through pr
 
 - **llm-council** (Karpathy): Python, web app interface, no web tools, abandoned. Wrong language and wrong schema.
 - **consilium**: Rust, no web tools, different output schema. Great project but doesn't match OpenRouter Fusion's architecture.
-- **OpenRouter Fusion**: Same deliberation pattern. Defaults to expensive frontier models (~$0.40–0.70/query), routes through OpenRouter platform, requires credit pre-purchase.
-- **pi-fusion**: Same deliberation pattern. Defaults to budget models (~$0.02/query), works with any OpenAI-compatible endpoint, uses your own API keys directly — no intermediary, no credit purchase needed.
+- **OpenRouter Fusion**: Same deliberation pattern. Defaults to expensive frontier models ($0.13/query Quality, $0.03/query Budget). Routes through OpenRouter, requires credit pre-purchase. [Head-to-head cost test →](docs/OR-FUSION-COMPARISON.md)
+- **pi-fusion**: Same deliberation pattern. Defaults to budget models ($0.009/query — measured, not estimated). Works with any OpenAI-compatible endpoint, uses your own API keys directly — no intermediary, no credit purchase needed.
 
 ---
 
