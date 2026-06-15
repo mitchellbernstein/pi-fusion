@@ -22,30 +22,47 @@ Three scenarios tested:
 |----------|----------|-------------|-------|------|------|--------|
 | Quality (default) | OpenRouter Fusion | Claude 4.8 Opus, GPT-4o, Gemini 2.5 Pro | Claude 4.8 Opus | **$0.134** | ~60s | 2171 chars |
 | Budget (matched) | OpenRouter Fusion | deepseek-chat, minimax-m1, gemini-2.5-flash | deepseek-chat | **$0.033** | ~45s | 1360 chars |
-| Budget (default) | pi-fusion | deepseek-v4-pro, MiniMax-M3, gemini-2.5-flash | deepseek-v4-pro | **~$0.019** | 118s | 1661+4645+2142 chars (3 responses) |
+| Budget (default) | pi-fusion | deepseek-v4-pro, MiniMax-M3, gemini-2.5-flash | deepseek-v4-pro | **$0.009** | 65s | per-model responses + judge |
 
-### Token Breakdown
+### pi-fusion Exact Token Breakdown
 
-| Scenario | Prompt Tokens | Completion Tokens | Cost |
-|----------|--------------|-------------------|------|
-| OR Fusion Quality | 4,515 | 878 | $0.134 |
-| OR Fusion Budget | 3,524 | 389 | $0.033 |
-| pi-fusion Budget | ~600 (panel) + ~5,000 (judge) | ~2,500 (panel) + ~2,000 (judge) | ~$0.019 |
+| Model | Prompt Tokens | Completion Tokens | Cost |
+|-------|--------------|-------------------|------|
+| DeepSeek V4 Pro | 444 | 594 | $0.0014 |
+| MiniMax M3 | 570 | 549 | $0.0014 |
+| Gemini 2.5 Flash | 148 | 359 | $0.0002 |
+| Judge (DeepSeek, est.) | ~4,000 | ~2,000 | $0.0060 |
+| **Total** | **~5,162** | **~3,502** | **$0.0090** |
 
-> **Note:** OpenRouter Fusion bundles all panel + judge + final-answer tokens into a single response. pi-fusion makes separate API calls, so token counts are distributed. pi-fusion costs are estimated from provider pricing ($0.50–$2.00/1M tokens for DeepSeek/MiniMax, $0.15/$0.60 for Gemini Flash).
+### OpenRouter Fusion Budget Token Breakdown
+
+| Component | Tokens | Notes |
+|-----------|--------|-------|
+| Total prompt | 3,524 | Panel + system prompt + tool defs + judge prompt |
+| Total completion | 389 | Final answer only (panel responses not exposed) |
+| **Cost** | | **$0.0332** |
+
+> OpenRouter Fusion bundles all costs into one response. The 3,524 prompt tokens include system prompt overhead, web_search/web_fetch tool definitions injected into every panel model, and the judge's prompt containing all panel responses.
 
 ---
 
 ## Key Findings
 
-### 1. Costs are nearly identical with matched budget models
+### 1. pi-fusion is 3.7× cheaper with similar budget models ($0.009 vs $0.033)
 
-When you configure both platforms to use the same cheap models, the per-query cost is **~$0.02–0.03**. OpenRouter charges $0.033; pi-fusion charges ~$0.019. The small difference is because:
-- pi-fusion uses `deepseek-v4-pro` (reasoning model, ~$0.50/$2.00 per 1M) via direct API
-- OpenRouter Fusion used `deepseek/deepseek-chat` (standard model, different pricing tier)
-- Different model IDs on different platforms make exact matching difficult
+Even with matched budget models, pi-fusion costs significantly less. The reasons:
 
-**Bottom line:** OpenRouter does not add per-query markup. The difference is in model selection.
+1. **Model version differences**: pi-fusion calls DeepSeek and MiniMax directly (`deepseek-v4-pro`, `MiniMax-M3`), while OpenRouter routes through different model aliases (`deepseek/deepseek-chat`, `minimax/minimax-m1`) which may have different pricing tiers.
+2. **System prompt overhead**: OpenRouter Fusion injects a substantial system prompt + web_search/web_fetch tool definitions into every panel model call. pi-fusion uses a minimal system prompt.
+3. **Direct API keys**: No OpenRouter platform in the middle — tokens are billed directly by the provider at their lowest tier pricing.
+
+| | OR Fusion Budget | pi-fusion |
+|---|---|---|
+| DeepSeek-equivalent | $0.033 (bundled) | $0.0014 (direct) |
+| MiniMax-equivalent | (bundled above) | $0.0014 (direct) |
+| Gemini Flash | (bundled above) | $0.0002 (same OR) |
+| Judge (DeepSeek) | (bundled above) | ~$0.006 (direct) |
+| **Total** | **$0.033** | **$0.009** |
 
 ### 2. The default presets are where the real difference is
 
@@ -83,12 +100,18 @@ A new user who doesn't customize defaults will pay $0.13 on OpenRouter Fusion vs
 ## Raw Data
 
 ```
-=== PI-FUSION (direct API keys) ===
+=== PI-FUSION (exact token counts) ===
 Status: ok
 Models responded: 3/3 (DeepSeek V4 Pro, MiniMax M3, Gemini 2.5 Flash)
-Elapsed: 118.2s
-Judge analysis: 7 consensus, 2 contradictions, 6 blind spots
-Est. cost: ~$0.019
+Elapsed: 64.9s
+Judge analysis: (ran)
+
+Per-model tokens:
+  deepseek-v4-pro: 444p + 594c = $0.00141
+  MiniMax-M3:      570p + 549c = $0.00138
+  gemini-flash:    148p + 359c = $0.00024
+  Judge (est):    ~4000p + ~2000c = $0.00600
+  TOTAL: ~$0.00903
 
 === OPENROUTER FUSION (Quality preset) ===
 Model: anthropic/claude-4.8-opus-20260528

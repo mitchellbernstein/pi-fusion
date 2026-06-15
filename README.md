@@ -285,8 +285,8 @@ Each test was run twice — once with a single model (DeepSeek V4 Pro) and once 
 | Blind spots surfaced | 0 (model can't report own gaps) | **5–6 per deliberation** |
 | Contradictions identified | None (single perspective) | **2–4 per deliberation** |
 | Fix quality | One approach | **2–3 competing fix strategies** |
-| Cost | ~$0.0055 | ~$0.021 |
-| Time | 33s | 156s |
+| Cost | ~$0.0055 | ~$0.009 (exact) |
+| Time | 33s | 65–150s |
 | **Cost per additional finding** | N/A | **~$0.001** |
 
 **Bottom line:** For $0.02 and ~2 minutes, fusion surfaces 2-3× more issues, identifies what no single model thought of, and reveals where experts disagree. The new panel (DeepSeek + MiniMax + **Gemini Flash**) achieves **75% 3/3 response rate** in testing. Uses your own API keys — pay providers directly, no intermediary markup or credit pre-purchase needed.

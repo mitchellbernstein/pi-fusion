@@ -11,6 +11,7 @@ export interface FusionAnalysis {
 export interface FusionResponse {
   model: string;
   content: string;
+  usage?: { promptTokens: number; completionTokens: number };
 }
 
 export interface FusionFailure {

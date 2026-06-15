@@ -16,13 +16,15 @@ export async function runWithTools(
     temperature?: number;
     timeoutMs?: number;
   },
-): Promise<{ content: string; messages: ChatMessage[] }> {
+): Promise<{ content: string; messages: ChatMessage[]; usage?: { promptTokens: number; completionTokens: number } }> {
   const messages: ChatMessage[] = [
     { role: "system", content: systemPrompt },
     { role: "user", content: userPrompt },
   ];
 
   const maxIterations = options?.maxToolCalls ?? DEFAULT_MAX_TOOL_CALLS;
+  let totalPromptTokens = 0;
+  let totalCompletionTokens = 0;
 
   for (let i = 0; i <= maxIterations; i++) {
     const completion = await chatCompletion(
@@ -40,9 +42,11 @@ export async function runWithTools(
     );
 
     const hasToolCalls = completion.tool_calls && completion.tool_calls.length > 0;
+    totalPromptTokens += completion.usage?.promptTokens ?? 0;
+    totalCompletionTokens += completion.usage?.completionTokens ?? 0;
 
     if (!hasToolCalls) {
-      return { content: completion.content ?? "[Model produced no content]", messages };
+      return { content: completion.content ?? "[Model produced no content]", messages, usage: { promptTokens: totalPromptTokens, completionTokens: totalCompletionTokens } };
     }
 
     if (i >= maxIterations) {
@@ -64,7 +68,9 @@ export async function runWithTools(
           timeoutMs: options?.timeoutMs,
         },
       );
-      return { content: final.content ?? "[Model produced no content]", messages };
+      totalPromptTokens += final.usage?.promptTokens ?? 0;
+      totalCompletionTokens += final.usage?.completionTokens ?? 0;
+      return { content: final.content ?? "[Model produced no content]", messages, usage: { promptTokens: totalPromptTokens, completionTokens: totalCompletionTokens } };
     }
 
     messages.push({
@@ -107,5 +113,5 @@ export async function runWithTools(
     }
   }
 
-  return { content: "[Model produced no content]", messages };
+  return { content: "[Model produced no content]", messages, usage: { promptTokens: totalPromptTokens, completionTokens: totalCompletionTokens } };
 }

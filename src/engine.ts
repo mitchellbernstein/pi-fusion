@@ -75,7 +75,7 @@ export async function fusionCall(
     const result = panelResults[i];
     const model = panelMembers[i].model;
     if (result.status === "fulfilled") {
-      responses.push({ model, content: result.value.content });
+      responses.push({ model, content: result.value.content, usage: result.value.usage });
     } else {
       const err = result.reason;
       let reason: string;
