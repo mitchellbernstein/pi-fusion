@@ -1,4 +1,4 @@
-import type { FusionResponse } from "./types.js";
+import type { FusionResponse, FusionAnalysis } from "./types.js";
 
 export function buildJudgePrompt(
   originalPrompt: string,
@@ -25,6 +25,41 @@ ${responsesText}
 
 Return ONLY valid JSON in this exact format (no markdown fences, no surrounding text):
 {"consensus":["string"],"contradictions":[{"topic":"string","stances":[{"model":"string","stance":"string"}]}],"partial_coverage":[{"models":["string"],"point":"string"}],"unique_insights":[{"model":"string","insight":"string"}],"blind_spots":["string"]}`;
+
+  return { system, user };
+}
+
+export function buildVerifierPrompt(
+  originalPrompt: string,
+  responses: FusionResponse[],
+  firstPassAnalysis: FusionAnalysis,
+): { system: string; user: string } {
+  const system = `You are a verification judge. You review a first-pass deliberation analysis against the original panel responses to catch errors, hallucinations, and missed findings. Always return valid JSON.`;
+
+  const responsesText = responses
+    .map((r) => `### Model: ${r.model}\n${r.content}`)
+    .join("\n\n");
+
+  const firstPassJson = JSON.stringify(firstPassAnalysis, null, 2);
+
+  const user = `## Original Prompt
+${originalPrompt}
+
+## Panel Responses
+${responsesText}
+
+## First-Pass Analysis (to verify)
+${firstPassJson}
+
+## Verification Instructions
+Re-examine the first-pass analysis against the RAW panel responses. Specifically:
+
+1. CONSENSUS: Check each consensus claim against the actual responses. Remove any that aren't actually supported by most models. Add any real agreements that were missed.
+2. CONTRADICTIONS: Check if claimed contradictions are real disagreements or just different phrasings of the same point. Remove false contradictions. Add real ones that were missed.
+3. PARTIAL COVERAGE & UNIQUE INSIGHTS: Verify these are actually present in the cited models' responses. Remove fabricated ones.
+4. BLIND SPOTS: This is the most important check. Re-scan the original prompt and ALL responses. What important aspects did NO model address? Add any that were missed. Remove blind spots that are actually covered by a model (even partially).
+
+Return ONLY valid JSON in the same format as the input analysis (consensus, contradictions, partial_coverage, unique_insights, blind_spots). Be conservative — remove things you're not confident about.`;
 
   return { system, user };
 }
